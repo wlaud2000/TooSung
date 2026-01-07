@@ -30,7 +30,7 @@ public class NotificationSetting extends SoftDeletableEntity {
     private Boolean emailBriefing = true;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
     public void updateSettings(Boolean pushBreakingNews, Boolean pushDisclosure, Boolean emailBriefing) {
