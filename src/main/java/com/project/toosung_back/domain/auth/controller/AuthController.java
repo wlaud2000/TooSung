@@ -26,4 +26,26 @@ public class AuthController implements AuthDocs {
         AuthResDTO.ResSignUp resDTO = authService.signUp(reqDTO);
         return CustomResponse.onSuccess(HttpStatus.CREATED, "회원 가입이 완료되었습니다.", resDTO);
     }
+
+    /**
+     * Swagger 문서용 가짜 로그인 엔드포인트
+     * 실제 처리는 CustomLoginFilter에서 수행
+     */
+    @Override
+    @PostMapping("/login")
+    public void login(@RequestBody @Valid AuthReqDTO.Login reqDTO) {
+        // 실제로 호출되지 않음 - CustomLoginFilter가 처리
+        throw new IllegalStateException("이 메서드는 호출되면 안됩니다.");
+    }
+
+    /**
+     * Swagger 문서용 가짜 로그아웃 엔드포인트
+     * 실제 처리는 LogoutFilter + CustomLogoutHandler에서 수행
+     */
+    @Override
+    @PostMapping("/logout")
+    public void logout() {
+        // 실제로 호출되지 않음 - Spring Security LogoutFilter가 처리
+        throw new IllegalStateException("이 메서드는 호출되면 안됩니다.");
+    }
 }

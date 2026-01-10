@@ -58,4 +58,57 @@ public interface AuthDocs {
     CustomResponse<AuthResDTO.ResSignUp> signUp(
             @RequestBody @Valid AuthReqDTO.ReqSignUp reqDTO
     );
+
+
+    @Operation(
+            summary = "로그인",
+            description = "이메일과 비밀번호로 로그인합니다. 성공 시 JWT 토큰이 쿠키에 저장됩니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "로그인 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                            {
+                                "isSuccess": true,
+                                "code": "COMMON-200",
+                                "message": "성공입니다.",
+                                "data": {
+                                    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                                    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                                }
+                            }
+                            """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "로그인 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                            {
+                                "isSuccess": false,
+                                "code": "SEC-004",
+                                "message": "이메일 또는 비밀번호가 올바르지 않습니다."
+                            }
+                            """)
+                    )
+            )
+    })
+    void login(@RequestBody @Valid AuthReqDTO.Login reqDTO);
+
+    @Operation(
+            summary = "로그아웃",
+            description = "현재 로그인된 사용자를 로그아웃합니다. 토큰이 블랙리스트에 등록되고 쿠키가 삭제됩니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "로그아웃 성공"
+            )
+    })
+    void logout();
 }
