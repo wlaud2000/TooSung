@@ -11,3 +11,16 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: update
+  jwt:
+    secret: ${JWT_SECRET}  # 최소 256bit 이상
+    token:
+      access-expiration-time: 1800000   # 30분
+      refresh-expiration-time: 604800000  # 7일
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+cookie:
+  secure: false  # 운영환경(HTTPS)에서는 true, 로컬 HTTP 테스트 시에는 false
+  same-site: Lax

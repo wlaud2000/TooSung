@@ -1,6 +1,12 @@
 package com.project.toosung_back.global.config;
 
-import com.project.toosung_back.domain.member.repository.MemberRepository;
+import com.project.toosung_back.global.security.exception.JwtAccessDeniedHandler;
+import com.project.toosung_back.global.security.exception.JwtAuthenticationEntryPoint;
+import com.project.toosung_back.global.security.filter.CustomLoginFilter;
+import com.project.toosung_back.global.security.filter.JwtAuthorizationFilter;
+import com.project.toosung_back.global.security.handler.CustomLogoutHandler;
+import com.project.toosung_back.global.security.utils.CookieUtil;
+import com.project.toosung_back.global.security.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +18,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -20,7 +28,11 @@ public class SecurityConfig {
 
     private final CorsConfig corsConfig;
     private final AuthenticationConfiguration authenticationConfiguration;
-    private final MemberRepository memberRepository;
+    private final JwtUtil jwtUtil;
+    private final CookieUtil cookieUtil;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    private final CustomLogoutHandler customLogoutHandler;
 
     //인증이 필요하지 않은 url
     private final String[] allowedUrls = {
@@ -73,6 +85,34 @@ public class SecurityConfig {
                         .anyRequest().authenticated() // 그 외의 url 들은 인증이 필요함
                 );
 
+        // 예외 처리
+        http
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(jwtAccessDeniedHandler)
+                );
+
+        // 로그아웃 설정
+        http
+                .logout(logout -> logout
+                        .logoutUrl("/api/v1/auth/logout")
+                        .addLogoutHandler(customLogoutHandler)
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.setStatus(200);
+                        })
+                );
+
+        // 필터 등록
+        CustomLoginFilter customLoginFilter = new CustomLoginFilter(
+                authenticationManager(authenticationConfiguration),
+                jwtUtil,
+                cookieUtil
+        );
+        customLoginFilter.setFilterProcessesUrl("/api/v1/auth/login");
+
+        http
+                .addFilterBefore(new JwtAuthorizationFilter(jwtUtil, cookieUtil), LogoutFilter.class)
+                .addFilterAt(customLoginFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

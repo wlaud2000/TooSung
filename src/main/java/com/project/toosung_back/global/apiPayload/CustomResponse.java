@@ -29,6 +29,11 @@ public class CustomResponse<T> {
         return new CustomResponse<>(true, String.valueOf(HttpStatus.OK.value()), message, result);
     }
 
+    // 데이터만 전달하는 성공 응답 생성 메서드
+    public static <T> CustomResponse<T> success(T result) {
+        return new CustomResponse<>(true, String.valueOf(HttpStatus.OK.value()), "성공", result);
+    }
+
     //상태 코드를 받아서 사용하는 성공 응답 생성 메서드
     public static <T> CustomResponse<T> onSuccess(HttpStatus status, String message ,T result) {
         return new CustomResponse<>(true, String.valueOf(status.value()), message, result);
