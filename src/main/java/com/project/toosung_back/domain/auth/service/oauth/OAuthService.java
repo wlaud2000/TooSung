@@ -11,6 +11,7 @@ import com.project.toosung_back.domain.auth.service.oauth.strategy.OAuthStrategy
 import com.project.toosung_back.domain.member.entity.Member;
 import com.project.toosung_back.domain.member.repository.MemberRepository;
 import com.project.toosung_back.global.security.userdetails.CustomUserDetails;
+import com.project.toosung_back.global.security.utils.CookieUtil;
 import com.project.toosung_back.global.security.utils.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -35,17 +36,20 @@ public class OAuthService {
     private final MemberRepository memberRepository;
     private final SocialAuthRepository socialAuthRepository;
     private final JwtUtil jwtUtil;
+    private final CookieUtil cookieUtil;
     private final Map<Provider, OAuthStrategy> oAuthStrategies;
 
     public OAuthService(
             MemberRepository memberRepository,
             SocialAuthRepository socialAuthRepository,
             JwtUtil jwtUtil,
+            CookieUtil cookieUtil,
             List<OAuthStrategy> strategies
     ) {
         this.memberRepository = memberRepository;
         this.socialAuthRepository = socialAuthRepository;
         this.jwtUtil = jwtUtil;
+        this.cookieUtil = cookieUtil;
         this.oAuthStrategies = strategies.stream()
                 .collect(Collectors.toMap(OAuthStrategy::getProvider, Function.identity()));
     }
@@ -71,7 +75,8 @@ public class OAuthService {
             Provider provider,
             String code,
             String state,
-            HttpSession session
+            HttpSession session,
+            HttpServletResponse response
     ) {
         // 1. state 검증
         validateState(state, session);
@@ -88,8 +93,8 @@ public class OAuthService {
         // 5. 회원 조회 또는 생성
         Member member = findOrCreateMember(userInfo);
 
-        // 6. JWT 토큰 발급 및 응답 생성
-        return createLoginResponse(member);
+        // 6. JWT 토큰 발급 및 쿠키 저장
+        return createLoginResponse(member, response);
     }
 
     private OAuthStrategy getStrategy(Provider provider) {
@@ -120,10 +125,15 @@ public class OAuthService {
         return member;
     }
 
-    private OAuthResDTO.LoginResponse createLoginResponse(Member member) {
+    private OAuthResDTO.LoginResponse createLoginResponse(Member member, HttpServletResponse response) {
         CustomUserDetails userDetails = new CustomUserDetails(member);
         String accessToken = jwtUtil.createAccessToken(userDetails);
         String refreshToken = jwtUtil.createRefreshToken(userDetails);
+
+        // 쿠키에 토큰 저장
+        cookieUtil.addCookie(response, "access_token", accessToken, jwtUtil.getAccessExpMs());
+        cookieUtil.addCookie(response, "refresh_token", refreshToken, jwtUtil.getRefreshExpMs());
+
         return AuthConverter.toLoginResponse(member, accessToken, refreshToken);
     }
 }

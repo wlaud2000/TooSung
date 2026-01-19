@@ -81,9 +81,10 @@ public class AuthController implements AuthDocs {
             @PathVariable("provider") Provider provider,
             @RequestParam("code") String code,
             @RequestParam("state") String state,
-            HttpSession session
+            HttpSession session,
+            HttpServletResponse response
     ) {
-        OAuthResDTO.LoginResponse resDTO = oAuthService.handleCallback(provider, code, state, session);
+        OAuthResDTO.LoginResponse resDTO = oAuthService.handleCallback(provider, code, state, session, response);
         return CustomResponse.onSuccess(HttpStatus.OK, provider.name() + " 로그인 성공", resDTO);
     }
 }

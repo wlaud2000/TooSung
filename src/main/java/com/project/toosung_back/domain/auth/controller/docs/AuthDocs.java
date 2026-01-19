@@ -235,6 +235,7 @@ public interface AuthDocs {
             @RequestParam("code") String code,
             @Parameter(description = "CSRF 방지용 state", required = true)
             @RequestParam("state") String state,
-            HttpSession session
+            HttpSession session,
+            HttpServletResponse response
     );
 }
