@@ -56,6 +56,31 @@ public class OAuthResDTO {
         }
     }
 
+    // Google OAuth Response
+    public record GoogleTokenResponse(
+            @JsonProperty("access_token")
+            String accessToken,
+
+            @JsonProperty("refresh_token")
+            String refreshToken,
+
+            @JsonProperty("token_type")
+            String tokenType,
+
+            @JsonProperty("expires_in")
+            Integer expiresIn,
+
+            @JsonProperty("id_token")
+            String idToken
+    ) {}
+
+    public record GoogleUserInfo(
+            String id,
+            String email,
+            String name,
+            String picture
+    ) {}
+
     @Builder
     public record LoginResponse(
             String accessToken,

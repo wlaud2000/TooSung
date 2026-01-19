@@ -24,11 +24,11 @@ spring:
     kakao:
       client-id: ${KAKAO_CLIENT_ID}
       client-secret: ${KAKAO_CLIENT_SECRET}
-      redirect-uri: http://localhost:8080/oauth2/callback/kakao
-  #    google:
-  #      client-id: ${GOOGLE_CLIENT_ID}
-  #      client-secret: ${GOOGLE_CLIENT_SECRET}
-  #      redirect-uri: http://localhost:3000/oauth/google/callback
+      redirect-uri: http://localhost:8080/api/v1/oauth2/callback/kakao
+    google:
+      client-id: ${GOOGLE_CLIENT_ID}
+      client-secret: ${GOOGLE_CLIENT_SECRET}
+      redirect-uri: http://localhost:8080/api/v1/oauth2/callback/google
 
 cookie:
   secure: true  # 운영환경(HTTPS)에서는 true, 로컬 HTTP 테스트 시에는 false

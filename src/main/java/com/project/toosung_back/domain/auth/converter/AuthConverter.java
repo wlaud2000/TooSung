@@ -3,9 +3,9 @@ package com.project.toosung_back.domain.auth.converter;
 import com.project.toosung_back.domain.auth.dto.request.AuthReqDTO;
 import com.project.toosung_back.domain.auth.dto.response.AuthResDTO;
 import com.project.toosung_back.domain.auth.dto.response.OAuthResDTO;
+import com.project.toosung_back.domain.auth.dto.response.OAuthUserInfo;
 import com.project.toosung_back.domain.auth.entity.LocalAuth;
 import com.project.toosung_back.domain.auth.entity.SocialAuth;
-import com.project.toosung_back.domain.auth.enums.Provider;
 import com.project.toosung_back.domain.member.entity.Member;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -21,11 +21,11 @@ public class AuthConverter {
                 .build();
     }
 
-    public static Member toKakaoMember(OAuthResDTO.KakaoUserInfo userInfo) {
+    public static Member toMember(OAuthUserInfo userInfo) {
         return Member.builder()
-                .email(userInfo.getEmail())
-                .nickname(userInfo.getNickname())
-                .profileImageUrl(userInfo.getProfileImageUrl())
+                .email(userInfo.email())
+                .nickname(userInfo.nickname())
+                .profileImageUrl(userInfo.profileImageUrl())
                 .build();
     }
 
@@ -36,10 +36,10 @@ public class AuthConverter {
                 .build();
     }
 
-    public static SocialAuth toSocialAuth(OAuthResDTO.KakaoUserInfo userInfo, Provider provider, Member member) {
+    public static SocialAuth toSocialAuth(OAuthUserInfo userInfo, Member member) {
         return SocialAuth.builder()
-                .provider(provider)
-                .providerId(String.valueOf(userInfo.id()))
+                .provider(userInfo.provider())
+                .providerId(userInfo.providerId())
                 .member(member)
                 .build();
     }
@@ -66,5 +66,4 @@ public class AuthConverter {
                 .profileImageUrl(member.getProfileImageUrl())
                 .build();
     }
-
 }
