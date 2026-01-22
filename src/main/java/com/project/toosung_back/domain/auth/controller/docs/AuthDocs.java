@@ -237,5 +237,5 @@ public interface AuthDocs {
             @RequestParam("state") String state,
             HttpSession session,
             HttpServletResponse response
-    );
+    ) throws IOException;
 }

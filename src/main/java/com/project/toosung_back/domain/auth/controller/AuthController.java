@@ -72,19 +72,32 @@ public class AuthController implements AuthDocs {
     }
 
     /**
-     * OAuth 콜백 처리
-     * GET /api/v1/oauth2/{provider}/callback
+     * OAuth 콜백 처리 및 리다이렉트
+     * GET /api/v1/oauth2/callback/{provider}
+     *
+     * 변경사항:
+     * 1. 반환 타입: CustomResponse -> void (리다이렉트 하므로 웅답 바디 없음)
+     * 2. 로직: 로그인 처리 후 JSON 반환 대신 프론트엔드 URL로 리다이렉트 수행
      */
-    @Override
     @GetMapping("/oauth2/callback/{provider}")
     public CustomResponse<OAuthResDTO.LoginResponse> handleCallback(
-            @PathVariable("provider") Provider provider,
+            @PathVariable("provider") Provider provider, // Enum 변환 문제 방지를 위해 String 권장, 필요시 Provider로 유지
             @RequestParam("code") String code,
             @RequestParam("state") String state,
-            HttpSession session,
+            HttpSession session, // 필요 없다면 제거 가능
             HttpServletResponse response
-    ) {
-        OAuthResDTO.LoginResponse resDTO = oAuthService.handleCallback(provider, code, state, session, response);
-        return CustomResponse.onSuccess(HttpStatus.OK, provider.name() + " 로그인 성공", resDTO);
+    ) throws IOException {
+        try {
+            // 1. 서비스 로직 수행 (여기서 토큰 발급 및 쿠키 설정이 내부적으로 이루어진다고 가정)
+            OAuthResDTO.LoginResponse resDTO = oAuthService.handleCallback(provider, code, state, session, response);
+            // 2. 성공 시 대시보드로 이동
+            response.sendRedirect("http://localhost:5173/dashboard");
+            return CustomResponse.onSuccess("로그인 성공", resDTO);
+        } catch (Exception e) {
+            e.printStackTrace();
+            // 3. 실패 시 로그인 페이지로 이동 (에러 메시지 전달)
+            response.sendRedirect("http://localhost:5173/auth/login?error=social_login_failed");
+            return CustomResponse.onFailure("failure","소셜 로그인 실패");
+        }
     }
 }
