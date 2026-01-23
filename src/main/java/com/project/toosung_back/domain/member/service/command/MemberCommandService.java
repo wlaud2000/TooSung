@@ -7,7 +7,8 @@ import com.project.toosung_back.domain.member.entity.Member;
 import com.project.toosung_back.domain.member.exception.MemberErrorCode;
 import com.project.toosung_back.domain.member.exception.MemberException;
 import com.project.toosung_back.domain.member.repository.MemberRepository;
-import com.project.toosung_back.global.s3.service.S3UploadService;
+// TODO: 인프라 구축 후 주석 해제
+// import com.project.toosung_back.global.s3.service.S3UploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberCommandService {
 
     private final MemberRepository memberRepository;
-    private final S3UploadService s3UploadService;
+    // TODO: 인프라 구축 후 주석 해제
+    // private final S3UploadService s3UploadService;
 
     public MemberResDTO.ResMemberInfo updateProfile(Long memberId, MemberReqDTO.ReqUpdateProfile reqDTO) {
         Member member = memberRepository.findById(memberId)
@@ -31,8 +33,8 @@ public class MemberCommandService {
         String newProfileImageUrl = null;
 
         if (reqDTO.profileImageUrl() != null && !reqDTO.profileImageUrl().isBlank()) {
-            // 기존 프로필 이미지 삭제
-            s3UploadService.deleteFile(member.getProfileImageUrl());
+            // TODO: 인프라 구축 후 주석 해제 - 기존 프로필 이미지 삭제
+            // s3UploadService.deleteFile(member.getProfileImageUrl());
             newProfileImageUrl = reqDTO.profileImageUrl();
         }
 
