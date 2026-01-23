@@ -36,4 +36,13 @@ public class Member extends SoftDeletableEntity {
     public boolean isSocialLogin() {
         return socialAuth != null;
     }
+
+    public void updateProfile(String nickname, String profileImageUrl) {
+        if (nickname != null && !nickname.isBlank()) {
+            this.nickname = nickname;
+        }
+        if (profileImageUrl != null) {
+            this.profileImageUrl = profileImageUrl;
+        }
+    }
 }
