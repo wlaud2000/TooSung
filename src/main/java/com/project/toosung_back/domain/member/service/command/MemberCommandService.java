@@ -42,4 +42,15 @@ public class MemberCommandService {
 
         return MemberConverter.toResMemberInfo(member);
     }
+
+    public void withdraw(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+        if (member.isDeleted()) {
+            throw new MemberException(MemberErrorCode.MEMBER_ALREADY_DELETED);
+        }
+
+        member.delete();
+    }
 }

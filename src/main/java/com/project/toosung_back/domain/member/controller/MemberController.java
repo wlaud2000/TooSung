@@ -41,4 +41,11 @@ public class MemberController implements MemberDocs {
         );
         return CustomResponse.onSuccess("회원 정보 수정 성공", resDTO);
     }
+
+    @Override
+    @DeleteMapping("/me")
+    public CustomResponse<Void> withdraw(@CurrentUser AuthUser authUser) {
+        memberCommandService.withdraw(authUser.getMemberId());
+        return CustomResponse.onSuccess("회원 탈퇴 성공", null);
+    }
 }

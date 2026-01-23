@@ -155,4 +155,75 @@ public interface MemberDocs {
             @Parameter(hidden = true) AuthUser authUser,
             MemberReqDTO.ReqUpdateProfile reqDTO
     );
+
+    @Operation(
+            summary = "회원 탈퇴",
+            description = """
+                    현재 로그인한 회원을 탈퇴 처리합니다.
+
+                    **Soft Delete 방식:**
+                    - 실제 데이터는 삭제되지 않고 `deletedAt` 필드에 탈퇴 시각이 기록됩니다.
+                    - 탈퇴한 회원은 로그인 및 서비스 이용이 불가능합니다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "탈퇴 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                                {
+                                    "isSuccess": true,
+                                    "code": "COMMON-200",
+                                    "message": "회원 탈퇴 성공",
+                                    "data": null
+                                }
+                                """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "이미 탈퇴한 회원",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                                {
+                                    "isSuccess": false,
+                                    "code": "MEMBER-002",
+                                    "message": "이미 탈퇴한 회원입니다."
+                                }
+                                """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                                {
+                                    "isSuccess": false,
+                                    "code": "SEC-001",
+                                    "message": "인증이 필요합니다."
+                                }
+                                """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "회원을 찾을 수 없음",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                                {
+                                    "isSuccess": false,
+                                    "code": "MEMBER-001",
+                                    "message": "존재하지 않는 회원입니다."
+                                }
+                                """)
+                    )
+            )
+    })
+    CustomResponse<Void> withdraw(@Parameter(hidden = true) AuthUser authUser);
 }
