@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "Member API", description = "회원 관련 API")
 public interface MemberDocs {
@@ -80,9 +79,12 @@ public interface MemberDocs {
 
                     **수정 가능 항목:**
                     - 닉네임 (2~10자)
-                    - 프로필 이미지 (jpeg, png, gif, webp / 최대 5MB)
+                    - 프로필 이미지 URL (S3 Pre-Signed URL로 업로드 후 받은 fileUrl)
 
-                    **요청 형식:** multipart/form-data
+                    **프로필 이미지 수정 흐름:**
+                    1. `POST /api/v1/s3/presigned-url/profile` 호출하여 업로드 URL 발급
+                    2. 발급받은 presignedUrl로 PUT 요청하여 S3에 직접 업로드
+                    3. 이 API에 fileUrl 전달하여 프로필 정보 업데이트
                     """
     )
     @ApiResponses({
@@ -111,29 +113,13 @@ public interface MemberDocs {
                     description = "잘못된 요청",
                     content = @Content(
                             schema = @Schema(implementation = CustomResponse.class),
-                            examples = {
-                                    @ExampleObject(name = "유효성 검증 실패", value = """
-                                        {
-                                            "isSuccess": false,
-                                            "code": "COMMON-400",
-                                            "message": "닉네임은 2자 이상 10자 이하로 입력해주세요."
-                                        }
-                                        """),
-                                    @ExampleObject(name = "파일 형식 오류", value = """
-                                        {
-                                            "isSuccess": false,
-                                            "code": "S3-003",
-                                            "message": "지원하지 않는 파일 형식입니다. (jpeg, png, gif, webp만 가능)"
-                                        }
-                                        """),
-                                    @ExampleObject(name = "파일 크기 초과", value = """
-                                        {
-                                            "isSuccess": false,
-                                            "code": "S3-002",
-                                            "message": "파일 크기는 5MB를 초과할 수 없습니다."
-                                        }
-                                        """)
-                            }
+                            examples = @ExampleObject(name = "유효성 검증 실패", value = """
+                                {
+                                    "isSuccess": false,
+                                    "code": "COMMON-400",
+                                    "message": "닉네임은 2자 이상 10자 이하로 입력해주세요."
+                                }
+                                """)
                     )
             ),
             @ApiResponse(
@@ -167,7 +153,6 @@ public interface MemberDocs {
     })
     CustomResponse<MemberResDTO.ResMemberInfo> updateProfile(
             @Parameter(hidden = true) AuthUser authUser,
-            @Parameter(description = "수정할 회원 정보 (닉네임)") MemberReqDTO.ReqUpdateProfile reqDTO,
-            @Parameter(description = "프로필 이미지 파일") MultipartFile profileImage
+            MemberReqDTO.ReqUpdateProfile reqDTO
     );
 }

@@ -8,10 +8,10 @@ import com.project.toosung_back.domain.member.service.query.MemberQueryService;
 import com.project.toosung_back.global.apiPayload.CustomResponse;
 import com.project.toosung_back.global.security.annotation.CurrentUser;
 import com.project.toosung_back.global.security.userdetails.AuthUser;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @RestController
@@ -33,13 +33,11 @@ public class MemberController implements MemberDocs {
     @PatchMapping("/me")
     public CustomResponse<MemberResDTO.ResMemberInfo> updateProfile(
             @CurrentUser AuthUser authUser,
-            @RequestPart(required = false) MemberReqDTO.ReqUpdateProfile reqDTO,
-            @RequestPart(required = false) MultipartFile profileImage
+            @RequestBody @Valid MemberReqDTO.ReqUpdateProfile reqDTO
     ) {
         MemberResDTO.ResMemberInfo resDTO = memberCommandService.updateProfile(
                 authUser.getMemberId(),
-                reqDTO,
-                profileImage
+                reqDTO
         );
         return CustomResponse.onSuccess("회원 정보 수정 성공", resDTO);
     }
