@@ -40,6 +40,7 @@ public class SecurityConfig {
             "/swagger-resources/**",
             "/v3/api-docs/**",
             "/api/v1/auth/signup",
+            "/api/v1/auth/reissue",
             "/api/v1/oauth2/**"
     };
 
