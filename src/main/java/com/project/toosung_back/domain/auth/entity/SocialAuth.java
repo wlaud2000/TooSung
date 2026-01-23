@@ -24,7 +24,7 @@ public class SocialAuth {
     @Column(name = "provider_id", nullable = false, unique = true)
     private String providerId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 }

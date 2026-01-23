@@ -1,6 +1,7 @@
 package com.project.toosung_back.domain.member.entity;
 
 import com.project.toosung_back.domain.auth.entity.LocalAuth;
+import com.project.toosung_back.domain.auth.entity.SocialAuth;
 import com.project.toosung_back.global.entity.SoftDeletableEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,4 +29,20 @@ public class Member extends SoftDeletableEntity {
 
     @OneToOne(mappedBy = "member", fetch = FetchType.LAZY)
     private LocalAuth localAuth;
+
+    @OneToOne(mappedBy = "member", fetch = FetchType.LAZY)
+    private SocialAuth socialAuth;
+
+    public boolean isSocialLogin() {
+        return socialAuth != null;
+    }
+
+    public void updateProfile(String nickname, String profileImageUrl) {
+        if (nickname != null && !nickname.isBlank()) {
+            this.nickname = nickname;
+        }
+        if (profileImageUrl != null) {
+            this.profileImageUrl = profileImageUrl;
+        }
+    }
 }

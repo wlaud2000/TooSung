@@ -74,10 +74,6 @@ public class AuthController implements AuthDocs {
     /**
      * OAuth 콜백 처리 및 리다이렉트
      * GET /api/v1/oauth2/callback/{provider}
-     *
-     * 변경사항:
-     * 1. 반환 타입: CustomResponse -> void (리다이렉트 하므로 웅답 바디 없음)
-     * 2. 로직: 로그인 처리 후 JSON 반환 대신 프론트엔드 URL로 리다이렉트 수행
      */
     @GetMapping("/oauth2/callback/{provider}")
     public CustomResponse<OAuthResDTO.LoginResponse> handleCallback(
