@@ -32,4 +32,8 @@ public class Member extends SoftDeletableEntity {
 
     @OneToOne(mappedBy = "member", fetch = FetchType.LAZY)
     private SocialAuth socialAuth;
+
+    public boolean isSocialLogin() {
+        return socialAuth != null;
+    }
 }
