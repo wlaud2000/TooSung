@@ -57,10 +57,10 @@ public class AuthService {
      * 토큰 재발급 (RTR 패턴 적용)
      *
      * 1. 쿠키에서 Refresh Token 추출
-     * 2. 토큰 유효성 검증
-     * 3. Redis의 저장된 토큰과 비교 (RTR)
-     * 4. 새로운 Access/Refresh Token 발급
-     * 5. 쿠키에 새 토큰 저장
+     * 2. Refresh Token 유효성 검증
+     * 3. RTR 패턴을 적용하여 새로운 Access/Refresh Token 발급
+     * 4. 새로운 토큰들을 쿠키에 저장
+     * 
      */
     public JwtDTO reissueToken(HttpServletRequest request, HttpServletResponse response) {
         // 1. 쿠키에서 Refresh Token 추출
