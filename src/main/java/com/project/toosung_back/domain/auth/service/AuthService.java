@@ -75,7 +75,7 @@ public class AuthService {
         } catch (ExpiredJwtException e) {
             log.warn("만료된 Refresh Token으로 재발급 시도");
             throw new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
-        } catch (Exception e) {
+        } catch (SecurityException | io.jsonwebtoken.UnsupportedJwtException | IllegalArgumentException e) {
             log.warn("유효하지 않은 Refresh Token: {}", e.getMessage());
             throw new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
         }
