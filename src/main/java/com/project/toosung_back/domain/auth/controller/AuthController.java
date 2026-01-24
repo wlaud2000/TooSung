@@ -8,6 +8,8 @@ import com.project.toosung_back.domain.auth.enums.Provider;
 import com.project.toosung_back.domain.auth.service.AuthService;
 import com.project.toosung_back.domain.auth.service.oauth.OAuthService;
 import com.project.toosung_back.global.apiPayload.CustomResponse;
+import com.project.toosung_back.global.security.dto.JwtDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -55,6 +57,20 @@ public class AuthController implements AuthDocs {
     @PostMapping("/auth/logout")
     public void logout() {
         throw new IllegalStateException("이 메서드는 호출되면 안됩니다.");
+    }
+
+    /**
+     * 토큰 재발급
+     * POST /api/v1/auth/reissue
+     */
+    @Override
+    @PostMapping("/auth/reissue")
+    public CustomResponse<JwtDTO> reissueToken(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        JwtDTO newTokens = authService.reissueToken(request, response);
+        return CustomResponse.onSuccess("토큰 재발급 성공", newTokens);
     }
 
     /**

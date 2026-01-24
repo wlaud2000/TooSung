@@ -5,6 +5,8 @@ import com.project.toosung_back.domain.auth.dto.response.AuthResDTO;
 import com.project.toosung_back.domain.auth.dto.response.OAuthResDTO;
 import com.project.toosung_back.domain.auth.enums.Provider;
 import com.project.toosung_back.global.apiPayload.CustomResponse;
+import com.project.toosung_back.global.security.dto.JwtDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -119,6 +121,85 @@ public interface AuthDocs {
             )
     })
     void logout();
+
+    @Operation(
+            summary = "토큰 재발급",
+            description = """
+                    Refresh Token을 사용하여 새로운 Access Token과 Refresh Token을 발급받습니다.
+
+                    **RTR (Refresh Token Rotation) 패턴 적용:**
+                    - 재발급 시 Refresh Token도 함께 갱신됩니다.
+                    - 이전 Refresh Token은 즉시 무효화됩니다.
+                    - 토큰 재사용이 감지되면 모든 토큰이 무효화됩니다.
+
+                    **쿠키 기반 인증:**
+                    - Refresh Token은 HttpOnly 쿠키에서 자동으로 전송됩니다.
+                    - 새로운 토큰들도 쿠키에 자동 저장됩니다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "토큰 재발급 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                            {
+                                "isSuccess": true,
+                                "code": "COMMON-200",
+                                "message": "토큰 재발급 성공",
+                                "data": {
+                                    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                                    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                                }
+                            }
+                            """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Refresh Token이 없거나 유효하지 않음",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "토큰 없음",
+                                            value = """
+                                            {
+                                                "isSuccess": false,
+                                                "code": "AUTH-003",
+                                                "message": "Refresh Token이 존재하지 않습니다."
+                                            }
+                                            """
+                                    ),
+                                    @ExampleObject(
+                                            name = "유효하지 않은 토큰",
+                                            value = """
+                                            {
+                                                "isSuccess": false,
+                                                "code": "AUTH-004",
+                                                "message": "유효하지 않은 Refresh Token입니다."
+                                            }
+                                            """
+                                    ),
+                                    @ExampleObject(
+                                            name = "토큰 재사용 감지",
+                                            value = """
+                                            {
+                                                "isSuccess": false,
+                                                "code": "AUTH-005",
+                                                "message": "토큰 재사용이 감지되었습니다. 다시 로그인해주세요."
+                                            }
+                                            """
+                                    )
+                            }
+                    )
+            )
+    })
+    CustomResponse<JwtDTO> reissueToken(
+            HttpServletRequest request,
+            HttpServletResponse response
+    );
 
     @Operation(
             summary = "소셜 로그인 페이지 리다이렉트",
