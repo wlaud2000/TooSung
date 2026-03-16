@@ -44,13 +44,14 @@
 
 ## 🏗 시스템 아키텍처
 
-> 🚧 추후 업데이트 예정
+<img width="1651" height="1161" alt="투성투성전체시스템아키텍처 drawio " src="https://github.com/user-attachments/assets/439748a5-445a-4351-871f-4efb88a1a3aa" />
 
 <br>
 
 ## 📊 ERD
 
-> 🚧 추후 업데이트 예정
+<img width="1406" height="757" alt="투성투성 ERD (2)" src="https://github.com/user-attachments/assets/5402807a-5177-4d60-a4c4-2a4ca36f1d19" />
+
 
 <br>
 
