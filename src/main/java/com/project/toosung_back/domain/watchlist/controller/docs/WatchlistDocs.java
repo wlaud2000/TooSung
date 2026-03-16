@@ -66,4 +66,58 @@ public interface WatchlistDocs {
             )
     })
     CustomResponse<WatchlistResDTO.ResWatchlistList> getWatchlist(@Parameter(hidden = true) AuthUser authUser);
+
+    @Operation(
+            summary = "관심 종목 삭제",
+            description = "본인의 관심 종목을 삭제합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "삭제 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                                {
+                                    "isSuccess": true,
+                                    "code": "COMMON-200",
+                                    "message": "관심 종목 삭제 성공",
+                                    "data": null
+                                }
+                                """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "권한 없음",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                                {
+                                    "isSuccess": false,
+                                    "code": "WATCHLIST-002",
+                                    "message": "해당 관심 종목에 접근할 권한이 없습니다."
+                                }
+                                """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "존재하지 않는 관심 종목",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                                {
+                                    "isSuccess": false,
+                                    "code": "WATCHLIST-001",
+                                    "message": "존재하지 않는 관심 종목입니다."
+                                }
+                                """)
+                    )
+            )
+    })
+    CustomResponse<Void> deleteWatchlist(
+            @Parameter(hidden = true) AuthUser authUser,
+            @Parameter(description = "삭제할 관심 종목 ID") Long watchlistId
+    );
 }
