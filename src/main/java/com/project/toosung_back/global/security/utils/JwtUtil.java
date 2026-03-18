@@ -100,7 +100,7 @@ public class JwtUtil {
                     .parseSignedClaims(token);
         } catch (ExpiredJwtException e) {
             throw new ExpiredJwtException(null, null, "만료된 토큰입니다.");
-        } catch (SecurityException | MalformedJwtException e) {
+        } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
             throw new SecurityException("잘못된 토큰 서명입니다.");
         } catch (UnsupportedJwtException e) {
             throw new UnsupportedJwtException("지원하지 않는 토큰입니다.");
