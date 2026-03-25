@@ -59,7 +59,15 @@ public class NewsCollectorService {
         int skippedCount = 0;
 
         for (NaverNewsResponse.NaverNewsItem item : items) {
-            String url = item.originalLink();
+            String url = (item.originalLink() != null && !item.originalLink().isBlank())
+                    ? item.originalLink()
+                    : item.link();
+
+            // url도 없으면 스킵
+            if (url == null || url.isBlank()) {
+                skippedCount++;
+                continue;
+            }
 
             // 중복 URL 필터링
             if (newsRepository.existsByUrl(url)) {
