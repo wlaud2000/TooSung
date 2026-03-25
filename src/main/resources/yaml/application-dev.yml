@@ -33,3 +33,10 @@ spring:
 cookie:
   secure: true  # 운영환경(HTTPS)에서는 true, 로컬 HTTP 테스트 시에는 false
   same-site: Lax
+
+naver:
+  news:
+    client-id: ${NAVER_CLIENT_ID}
+    client-secret: ${NAVER_CLIENT_SECRET}
+    uri: https://openapi.naver.com/v1/search/news.json
+    display: 100 # 1회 최대 수집 건수
