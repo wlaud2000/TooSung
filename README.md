@@ -1,4 +1,4 @@
-# 투성투성 (TuSeongTuSeong) 📰
+# 투성투성 (TooSungTooSung) 📰
 
 > AI 기반 주식 뉴스 · 공시 분석 비서 — 내 관심 종목 뉴스, AI가 알아서 읽고 나한테 맞게 정리해드려요
 
