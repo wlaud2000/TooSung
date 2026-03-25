@@ -1,6 +1,7 @@
 package com.project.toosung_back.global.config;
 
 import io.netty.channel.ChannelOption;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -13,12 +14,29 @@ import java.time.Duration;
 public class WebClientConfig {
 
     @Bean
+    @Qualifier("oauthWebClient")
     public WebClient oauthWebClient() {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)  // 연결 타임아웃
                 .responseTimeout(Duration.ofSeconds(5));              // 응답 타임아웃
 
         return WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .codecs(configurer -> configurer
+                        .defaultCodecs()
+                        .maxInMemorySize(2 * 1024 * 1024)) // 2MB
+                .build();
+    }
+
+    @Bean
+    @Qualifier("naverWebClient")
+    public WebClient naverWebClient() {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)  // 연결 타임아웃
+                .responseTimeout(Duration.ofSeconds(10));              // 응답 타임아웃
+
+        return WebClient.builder()
+                .baseUrl("https://openapi.naver.com")
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .codecs(configurer -> configurer
                         .defaultCodecs()

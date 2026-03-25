@@ -68,6 +68,9 @@ dependencies {
 
     // AWS S3 (TODO: 인프라 구축 후 주석 해제)
     // implementation 'software.amazon.awssdk:s3:2.25.60'
+
+    // jsoup
+    implementation 'org.jsoup:jsoup:1.22.1'
 }
 
 tasks.named('test') {
