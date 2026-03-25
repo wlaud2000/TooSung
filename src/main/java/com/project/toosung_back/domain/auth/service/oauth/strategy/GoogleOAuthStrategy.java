@@ -7,6 +7,7 @@ import com.project.toosung_back.domain.auth.exception.AuthErrorCode;
 import com.project.toosung_back.domain.auth.exception.AuthException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
@@ -19,8 +20,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class GoogleOAuthStrategy implements OAuthStrategy {
 
     private static final String AUTHORIZATION_URL = "https://accounts.google.com/o/oauth2/v2/auth";
@@ -36,6 +37,7 @@ public class GoogleOAuthStrategy implements OAuthStrategy {
     @Value("${spring.oauth.google.redirect-uri}")
     private String redirectUri;
 
+    @Qualifier("oauthWebClient")
     private final WebClient webClient;
 
     @Override

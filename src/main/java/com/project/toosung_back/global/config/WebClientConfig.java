@@ -1,6 +1,7 @@
 package com.project.toosung_back.global.config;
 
 import io.netty.channel.ChannelOption;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -13,6 +14,7 @@ import java.time.Duration;
 public class WebClientConfig {
 
     @Bean
+    @Qualifier("oauthWebClient")
     public WebClient oauthWebClient() {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)  // 연결 타임아웃
@@ -27,6 +29,7 @@ public class WebClientConfig {
     }
 
     @Bean
+    @Qualifier("naverWebClient")
     public WebClient naverWebClient() {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)  // 연결 타임아웃
