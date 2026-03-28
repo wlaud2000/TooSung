@@ -12,8 +12,7 @@
 
 - 관심 종목의 뉴스를 자동 수집하고 **호재/악재를 근거와 함께 판단**합니다
 - 어려운 공시를 **쉬운 말로 번역**하고 투자 포인트를 짚어줍니다
-- **RAG** 기반으로 사용자의 과거 관심사를 학습해 **개인화된 아침 브리핑**을 제공합니다
-- "삼성전자 이번 주 악재 뭐 있어?"처럼 **자연어로 질문**할 수 있습니다
+- 관심 종목의 오늘 분석 결과를 바탕으로 **개인화된 아침 브리핑**을 제공합니다
 
 <br>
 
@@ -30,10 +29,8 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
 
-### AI / RAG
+### AI
 ![OpenAI](https://img.shields.io/badge/OpenAI_GPT--4-412991?style=flat-square&logo=openai&logoColor=white)
-![LangChain](https://img.shields.io/badge/LangChain-1C3C3C?style=flat-square&logo=langchain&logoColor=white)
-![Qdrant](https://img.shields.io/badge/Qdrant-Vector_DB-DC244C?style=flat-square)
 
 ### External APIs
 - **DART OpenAPI** — 전자공시 수집
@@ -44,13 +41,14 @@
 
 ## 🏗 시스템 아키텍처
 
-<img width="1651" height="1161" alt="투성투성전체시스템아키텍처 drawio " src="https://github.com/user-attachments/assets/439748a5-445a-4351-871f-4efb88a1a3aa" />
+<img width="1581" height="1041" alt="투성투성v2전체아키텍처다이어그램 drawio" src="https://github.com/user-attachments/assets/f302c717-4fdf-483f-b096-60ed8a3d7032" />
+
 
 <br>
 
 ## 📊 ERD
 
-<img width="1406" height="757" alt="투성투성 ERD (2)" src="https://github.com/user-attachments/assets/5402807a-5177-4d60-a4c4-2a4ca36f1d19" />
+<img width="826" height="467" alt="image" src="https://github.com/user-attachments/assets/c541b40c-8b6e-42f0-ad85-5ed279b47458" />
 
 
 <br>
@@ -60,17 +58,15 @@
 ### 사전 요구사항
 
 - Java 21
-- Docker & Docker Compose (MySQL, Redis, Qdrant)
+- Docker & Docker Compose (MySQL, Redis)
 
 ### 1. 저장소 클론
-
 ```bash
 git clone https://github.com/wlaud2000/TooSung.git
 cd TooSung
 ```
 
 ### 2. 환경 변수 설정
-
 ```bash
 cp .env.example .env
 # .env 파일에 아래 값 입력
@@ -81,13 +77,11 @@ cp .env.example .env
 ```
 
 ### 3. 인프라 실행
-
 ```bash
 docker-compose up -d
 ```
 
 ### 4. 애플리케이션 실행
-
 ```bash
 ./gradlew bootRun
 ```
@@ -97,16 +91,15 @@ docker-compose up -d
 <br>
 
 ## 📁 프로젝트 구조
-
 ```
 tuseong-tuseong/
 ├── src/
 │   ├── main/
 │   │   ├── java/
 │   │   │   └── com/tuseong/
-│   │   │       ├── domain/          # 도메인별 패키지 (news, disclosure, user, rag...)
+│   │   │       ├── domain/          # 도메인별 패키지 (news, disclosure, user, briefing...)
 │   │   │       └── global/          # 공통 설정, 예외 처리, 보안
-│   │   │      
+│   │   │
 │   │   └── resources/
 │   │       └── application.yml
 └── docker-compose.yml
@@ -116,9 +109,9 @@ tuseong-tuseong/
 
 ## 🔑 주요 기술적 도전과 해결
 
-### 1. RAG 기반 개인화 브리핑
+### 1. 관심 종목 기반 개인화 브리핑
 
-단순 키워드 매칭이 아닌 사용자의 과거 클릭 패턴, 질문 이력을 임베딩해 Vector DB에 저장합니다. 브리핑 생성 시 오늘의 뉴스와 유사도 검색을 수행해 개인에게 가장 관련 있는 콘텐츠를 우선 제공합니다.
+관심 종목 목록을 기준으로 당일 LLM 분석이 완료된 뉴스와 공시를 필터링해 수집하고, 이를 컨텍스트로 구성해 LLM에 전달합니다. 유사도 검색 없이도 사용자별로 다른 브리핑을 생성할 수 있으며, Redis 캐싱으로 반복 요청 시 응답 속도를 개선했습니다.
 
 ### 2. 공시 자동 해석 파이프라인
 
