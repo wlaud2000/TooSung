@@ -26,4 +26,11 @@ public class Stock {
 
     @Column(name = "country", nullable = false, length = 10)
     private String country;
+
+    @Column(name = "dart_corp_code", length = 8)
+    private String dartCorpCode;
+
+    public void updateDartCorpCode(String dartCorpCode) {
+        this.dartCorpCode = dartCorpCode;
+    }
 }

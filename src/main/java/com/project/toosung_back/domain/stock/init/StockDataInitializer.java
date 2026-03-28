@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
+@Order(1)
 @Component
 @RequiredArgsConstructor
 public class StockDataInitializer implements ApplicationRunner {
@@ -48,11 +50,15 @@ public class StockDataInitializer implements ApplicationRunner {
                 String[] fields = line.split(",");
                 if (fields.length < 4) continue;
 
+                String dartCorpCode = (fields.length >= 5 && !fields[4].trim().isEmpty())
+                        ? fields[4].trim() : null;
+
                 stocks.add(Stock.builder()
                         .symbol(fields[0].trim())
                         .name(fields[1].trim())
                         .market(fields[2].trim())
                         .country(fields[3].trim())
+                        .dartCorpCode(dartCorpCode)
                         .build());
             }
         }
