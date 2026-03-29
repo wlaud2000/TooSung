@@ -1,6 +1,8 @@
 package com.project.toosung_back.domain.disclosure.repository;
 
 import com.project.toosung_back.domain.disclosure.entity.Disclosure;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,4 +15,14 @@ public interface DisclosureRepository extends JpaRepository<Disclosure, Long> {
 
     @Query("SELECT d FROM Disclosure  d JOIN FETCH d.stock WHERE d.id = :id")
     Optional<Disclosure> findByIdWithStock(@Param("id") Long id);
+
+    @Query("SELECT d FROM Disclosure d JOIN FETCH d.stock " +
+            "WHERE d.stock.id = :stockId " +
+            "AND (:cursor IS NULL OR d.id < :cursor) " +
+            "AND (:type IS NULL OR d.disclosureType LIKE CONCAT('%', :type, '%')) " +
+            "ORDER BY d.id DESC")
+    Slice<Disclosure> findDisclosures(@Param("stockId") Long stockId,
+                                      @Param("cursor") Long cursor,
+                                      @Param("type") String type,
+                                      Pageable pageable);
 }

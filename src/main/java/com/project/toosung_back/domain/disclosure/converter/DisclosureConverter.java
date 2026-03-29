@@ -23,4 +23,14 @@ public class DisclosureConverter {
                 .aiAnalyzedAt(disclosure.getAiAnalyzedAt())
                 .build();
     }
+
+    public static DisclosureResDTO.DisclosureItem toDisclosureItem(Disclosure disclosure) {
+        String title = disclosure.getStock().getName() + " - " + disclosure.getDisclosureType();
+        return DisclosureResDTO.DisclosureItem.builder()
+                .disclosureId(disclosure.getId())
+                .title(title)
+                .disclosureType(disclosure.getDisclosureType())
+                .submittedAt(disclosure.getPublishedAt())
+                .build();
+    }
 }

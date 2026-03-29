@@ -3,6 +3,7 @@ package com.project.toosung_back.domain.disclosure.dto.response;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class DisclosureResDTO {
 
@@ -21,4 +22,19 @@ public class DisclosureResDTO {
             LocalDateTime aiAnalyzedAt
     ) {
     }
+
+    @Builder
+    public record DisclosureItem(
+            Long disclosureId,
+            String title,
+            String disclosureType,
+            LocalDateTime submittedAt
+    ) {}
+
+    @Builder
+    public record DisclosureList(
+            List<DisclosureItem> items,
+            Long nextCursor,
+            boolean hasNext
+    ) {}
 }
