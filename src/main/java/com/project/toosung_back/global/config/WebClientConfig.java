@@ -43,4 +43,20 @@ public class WebClientConfig {
                         .maxInMemorySize(2 * 1024 * 1024)) // 2MB
                 .build();
     }
+
+    @Bean
+    @Qualifier("dartWebClient")
+    public WebClient dartWebClient() {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)   // 연결 타임아웃
+                .responseTimeout(Duration.ofSeconds(15));              // 응답 타임아웃
+
+        return WebClient.builder()
+                .baseUrl("https://opendart.fss.or.kr")
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .codecs(configurer -> configurer
+                        .defaultCodecs()
+                        .maxInMemorySize(15 * 1024 * 1024)) // 15MB (corpCode.xml ZIP 대응)
+                .build();
+    }
 }
