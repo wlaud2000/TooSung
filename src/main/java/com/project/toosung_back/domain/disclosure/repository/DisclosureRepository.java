@@ -1,7 +1,7 @@
 package com.project.toosung_back.domain.disclosure.repository;
 
 import com.project.toosung_back.domain.disclosure.entity.Disclosure;
-import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
