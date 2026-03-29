@@ -11,4 +11,8 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
 
     @Query("SELECT s FROM Stock s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(s.symbol) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Stock> searchByKeyword(@Param("keyword") String keyword);
+
+    List<Stock> findByDartCorpCodeIsNull();
+
+    long countByDartCorpCodeIsNull();
 }

@@ -41,6 +41,9 @@ naver:
     uri: https://openapi.naver.com/v1/search/news.json
     display: 100 # 1회 최대 수집 건수
 
+dart:
+  api-key: ${DART_API_KEY}
+
 # TODO: 인프라 구축 후 주석 해제
 #cloud:
 #  aws:

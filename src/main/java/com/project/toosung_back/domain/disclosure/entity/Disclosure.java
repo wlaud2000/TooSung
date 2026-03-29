@@ -22,7 +22,7 @@ public class Disclosure extends BaseEntity {
     @Column(name = "dart_id", nullable = false)
     private String dartId;
 
-    @Column(name = "disclosure_type", nullable = false, length = 50)
+    @Column(name = "disclosure_type", nullable = false, length = 200)
     private String disclosureType;
 
     @Column(name = "url", nullable = false, length = 500)
@@ -43,7 +43,14 @@ public class Disclosure extends BaseEntity {
     @Column(name = "ai_analyzed_at")
     private LocalDateTime aiAnalyzedAt;
 
+    @Column(name = "raw_data", columnDefinition = "TEXT")
+    private String rawData;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stock_id", nullable = false)
     private Stock stock;
+
+    public void updateRawData(String rawData) {
+        this.rawData = rawData;
+    }
 }
