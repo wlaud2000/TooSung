@@ -10,9 +10,61 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Tag(name = "News API", description = "뉴스 관련 API")
 public interface NewsDocs {
+
+    @Operation(
+            summary = "뉴스 상세 조회",
+            description = "뉴스 ID로 단건 뉴스를 조회합니다. AI 분석 필드는 처리 전 null일 수 있습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "뉴스 상세 조회 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {
+                                        "isSuccess": true,
+                                        "code": "200",
+                                        "message": "뉴스 상세 조회 성공",
+                                        "result": {
+                                            "newsId": 42,
+                                            "title": "삼성전자, 3분기 영업이익 10조 돌파",
+                                            "url": "https://...",
+                                            "thumbnailUrl": "https://...",
+                                            "source": "네이버뉴스",
+                                            "publishedAt": "2026-04-02T09:30:00",
+                                            "sentiment": "POSITIVE",
+                                            "aiSummary": "삼성전자가 3분기 영업이익 10조원을 달성했습니다.",
+                                            "aiAnalysis": "반도체 업황 회복과 HBM 수요 증가가 주요 요인으로...",
+                                            "aiAnalyzedAt": "2026-04-02T10:00:00"
+                                        }
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "존재하지 않는 뉴스",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {
+                                        "isSuccess": false,
+                                        "code": "NEWS404_1",
+                                        "message": "존재하지 않는 뉴스입니다"
+                                    }
+                                    """)
+                    )
+            )
+    })
+    CustomResponse<NewsResDTO.NewsDetail> getNewsDetail(
+            @Parameter(description = "뉴스 ID", required = true, example = "42")
+            @PathVariable Long newsId
+    );
 
     @Operation(
             summary = "관심 종목 뉴스 목록 조회",

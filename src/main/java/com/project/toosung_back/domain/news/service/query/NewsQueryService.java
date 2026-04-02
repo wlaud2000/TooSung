@@ -3,12 +3,15 @@ package com.project.toosung_back.domain.news.service.query;
 import com.project.toosung_back.domain.news.converter.NewsConverter;
 import com.project.toosung_back.domain.news.dto.response.NewsResDTO;
 import com.project.toosung_back.domain.news.entity.News;
+import com.project.toosung_back.domain.news.exception.NewsErrorCode;
+import com.project.toosung_back.domain.news.exception.NewsException;
 import com.project.toosung_back.domain.news.repository.NewsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -19,6 +22,14 @@ public class NewsQueryService {
 
     private final NewsRepository newsRepository;
 
+    @Transactional(readOnly = true)
+    public NewsResDTO.NewsDetail getNewsDetail(Long newsId) {
+        News news = newsRepository.findById(newsId)
+                .orElseThrow(() -> new NewsException(NewsErrorCode.NEWS_NOT_FOUND));
+        return NewsConverter.toNewsDetail(news);
+    }
+
+    @Transactional(readOnly = true)
     public NewsResDTO.NewsList getNews(Long stockId, Long cursor, int size) {
         Slice<News> slice = newsRepository.findByStockIdWithCursor(stockId, cursor, PageRequest.of(0, size));
         List<NewsResDTO.NewsItem> items = slice.getContent().stream()

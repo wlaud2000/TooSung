@@ -6,6 +6,7 @@ import com.project.toosung_back.domain.news.service.query.NewsQueryService;
 import com.project.toosung_back.global.apiPayload.CustomResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,6 +17,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class NewsController implements NewsDocs {
 
     private final NewsQueryService newsQueryService;
+
+    @Override
+    @GetMapping("/{newsId}")
+    public CustomResponse<NewsResDTO.NewsDetail> getNewsDetail(
+            @PathVariable Long newsId
+    ) {
+        NewsResDTO.NewsDetail dto = newsQueryService.getNewsDetail(newsId);
+        return CustomResponse.onSuccess("뉴스 상세 조회 성공", dto);
+    }
 
     @Override
     @GetMapping
