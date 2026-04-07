@@ -4,11 +4,11 @@ import com.project.toosung_back.domain.news.client.NaverNewsClient;
 import com.project.toosung_back.domain.news.dto.response.NaverNewsResponse;
 import com.project.toosung_back.domain.news.entity.News;
 import com.project.toosung_back.domain.news.entity.NewsStock;
-import com.project.toosung_back.domain.news.enums.Sentiment;
 import com.project.toosung_back.domain.news.repository.NewsRepository;
 import com.project.toosung_back.domain.news.repository.NewsStockRepository;
 import com.project.toosung_back.domain.stock.entity.Stock;
 import com.project.toosung_back.domain.watchlist.repository.WatchlistRepository;
+import com.project.toosung_back.global.cache.CacheEvictService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -30,6 +30,7 @@ public class NewsCollectorService {
     private final NaverNewsClient naverNewsClient;
     private final NewsRepository newsRepository;
     private final NewsStockRepository newsStockRepository;
+    private final CacheEvictService cacheEvictService;
 
     private static final DateTimeFormatter NAVER_DATE_FORMAT =
             DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
@@ -41,6 +42,7 @@ public class NewsCollectorService {
         for (Stock stock : stocks) {
             try {
                 collectForStock(stock);
+                cacheEvictService.evictNewsCache(stock.getId());
             } catch (Exception e) {
                 log.error("[NewsScheduler] 종목 처리 중 오류 - 종목: {} ({}), error: {}",
                         stock.getName(), stock.getSymbol(), e.getMessage());
@@ -63,13 +65,11 @@ public class NewsCollectorService {
                     ? item.originalLink()
                     : item.link();
 
-            // url도 없으면 스킵
             if (url == null || url.isBlank()) {
                 skippedCount++;
                 continue;
             }
 
-            // 중복 URL 필터링
             if (newsRepository.existsByUrl(url)) {
                 skippedCount++;
                 continue;
@@ -81,7 +81,6 @@ public class NewsCollectorService {
                     .title(cleanHtml(item.title()))
                     .url(url)
                     .publishedAt(parseDate(item.pubDate()))
-                    .sentiment(Sentiment.NEUTRAL)
                     .build();
 
             newsRepository.save(news);
