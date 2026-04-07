@@ -31,18 +31,6 @@ public class Disclosure extends BaseEntity {
     @Column(name = "published_at", nullable = false)
     private LocalDateTime publishedAt;
 
-    @Column(name = "ai_summary", columnDefinition = "TEXT")
-    private String aiSummary;
-
-    @Column(name = "ai_impact", columnDefinition = "TEXT")
-    private String aiImpact;
-
-    @Column(name = "ai_investment_point", columnDefinition = "TEXT")
-    private String aiInvestmentPoint;
-
-    @Column(name = "ai_analyzed_at")
-    private LocalDateTime aiAnalyzedAt;
-
     @Column(name = "raw_data", columnDefinition = "TEXT")
     private String rawData;
 

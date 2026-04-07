@@ -16,10 +16,9 @@ public class DisclosureResDTO {
             String stockSymbol,
             String stockName,
             String rawData,
-            String aiSummary,
-            String aiImpact,
-            String aiInvestmentPoint,
-            LocalDateTime aiAnalyzedAt
+            String simpleSummary,
+            String investmentPoint,
+            LocalDateTime analyzedAt
     ) {
     }
 
