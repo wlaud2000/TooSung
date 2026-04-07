@@ -9,7 +9,12 @@ import lombok.*;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Table(name = "news_stock")
+@Table(
+    name = "news_stock",
+    indexes = {
+        @Index(name = "idx_news_stock_stock_id_news_id", columnList = "stock_id, news_id DESC")
+    }
+)
 public class NewsStock {
 
     @Id
