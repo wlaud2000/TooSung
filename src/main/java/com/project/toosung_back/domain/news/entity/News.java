@@ -1,6 +1,5 @@
 package com.project.toosung_back.domain.news.entity;
 
-import com.project.toosung_back.domain.news.enums.Sentiment;
 import com.project.toosung_back.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -36,17 +35,4 @@ public class News extends BaseEntity {
 
     @Column(name = "published_at", nullable = false)
     private LocalDateTime publishedAt;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "sentiment", nullable = false, length = 20)
-    private Sentiment sentiment;
-
-    @Column(name = "ai_summary", columnDefinition = "TEXT")
-    private String aiSummary;
-
-    @Column(name = "ai_analysis", columnDefinition = "TEXT")
-    private String aiAnalysis;
-
-    @Column(name = "ai_analyzed_at")
-    private LocalDateTime aiAnalyzedAt;
 }

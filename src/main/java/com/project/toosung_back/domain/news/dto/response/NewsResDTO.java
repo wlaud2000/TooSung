@@ -15,10 +15,10 @@ public class NewsResDTO {
             String thumbnailUrl,
             String source,
             LocalDateTime publishedAt,
+            String summary,
             String sentiment,
-            String aiSummary,
-            String aiAnalysis,
-            LocalDateTime aiAnalyzedAt
+            String sentimentReason,
+            LocalDateTime analyzedAt
     ) {}
 
     @Builder
@@ -29,14 +29,12 @@ public class NewsResDTO {
             String url,
             LocalDateTime publishedAt,
             String source
-    ) {
-    }
+    ) {}
 
     @Builder
     public record NewsList(
             List<NewsItem> items,
             Long nextCursor,
             boolean hasNext
-    ) {
-    }
+    ) {}
 }
