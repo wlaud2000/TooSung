@@ -12,7 +12,12 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Table(name = "disclosure")
+@Table(
+    name = "disclosure",
+    indexes = {
+        @Index(name = "idx_disclosure_stock_id_id", columnList = "stock_id, id DESC")
+    }
+)
 public class Disclosure extends BaseEntity {
 
     @Id
