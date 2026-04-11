@@ -4,6 +4,7 @@ import io.netty.channel.ChannelOption;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
@@ -57,6 +58,23 @@ public class WebClientConfig {
                 .codecs(configurer -> configurer
                         .defaultCodecs()
                         .maxInMemorySize(15 * 1024 * 1024)) // 15MB (corpCode.xml ZIP 대응)
+                .build();
+    }
+
+    @Bean
+    @Qualifier("openAiWebClient")
+    public WebClient openAiWebClient() {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)  // 연결 타임아웃
+                .responseTimeout(Duration.ofSeconds(30));              // 응답 타임아웃 (AI 추론 시간 여유)
+
+        return WebClient.builder()
+                .baseUrl("https://api.openai.com")
+                .defaultHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .codecs(configurer -> configurer
+                        .defaultCodecs()
+                        .maxInMemorySize(1024 * 1024)) // 1MB
                 .build();
     }
 }
