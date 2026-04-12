@@ -15,8 +15,8 @@ import com.project.toosung_back.global.openai.dto.OpenAiChatResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class NewsAnalysisService {
 
-    private static final int BATCH_SIZE = 20;
+    private static final int BATCH_SIZE = 10;
 
     private final NewsRepository newsRepository;
     private final NewsStockRepository newsStockRepository;
@@ -36,6 +36,7 @@ public class NewsAnalysisService {
     private final OpenAiClient openAiClient;
     private final ObjectMapper objectMapper;
 
+    @Async("newsAnalysisExecutor")
     public void analyzeUnanalyzedNews() {
         List<News> newsList = newsRepository.findUnanalyzedNews(PageRequest.of(0, BATCH_SIZE));
         if (newsList.isEmpty()) {
@@ -72,8 +73,7 @@ public class NewsAnalysisService {
         log.info("[NewsAnalysisService] 분석 완료 - 성공: {}건, 실패: {}건", successCount, failCount);
     }
 
-    @Transactional
-    public void analyzeAndSave(News news, String stockName) throws Exception {
+    private void analyzeAndSave(News news, String stockName) throws Exception {
         OpenAiChatRequest request = NewsAnalysisPrompt.build(news.getTitle(), stockName);
         OpenAiChatResponse response = openAiClient.chat(request);
 
