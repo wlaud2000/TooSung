@@ -26,6 +26,9 @@ public class NewsAnalysis extends BaseEntity {
     @Column(name = "summary", columnDefinition = "TEXT", nullable = false)
     private String summary;
 
+    @Column(name = "key_points", columnDefinition = "TEXT")
+    private String keyPoints;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "sentiment", nullable = false, length = 20)
     private Sentiment sentiment;

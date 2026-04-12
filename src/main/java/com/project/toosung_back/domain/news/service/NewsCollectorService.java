@@ -4,7 +4,6 @@ import com.project.toosung_back.domain.news.client.NaverNewsClient;
 import com.project.toosung_back.domain.news.dto.response.NaverNewsResponse;
 import com.project.toosung_back.domain.news.entity.News;
 import com.project.toosung_back.domain.news.entity.NewsStock;
-import com.project.toosung_back.domain.news.enums.Sentiment;
 import com.project.toosung_back.domain.news.repository.NewsRepository;
 import com.project.toosung_back.domain.news.repository.NewsStockRepository;
 import com.project.toosung_back.domain.stock.entity.Stock;
@@ -81,7 +80,6 @@ public class NewsCollectorService {
                     .title(cleanHtml(item.title()))
                     .url(url)
                     .publishedAt(parseDate(item.pubDate()))
-                    .sentiment(Sentiment.NEUTRAL)
                     .build();
 
             newsRepository.save(news);
