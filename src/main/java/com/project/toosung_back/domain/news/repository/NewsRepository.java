@@ -7,7 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface NewsRepository extends JpaRepository<News, Long> {
+
     boolean existsByUrl(String url);
 
     @Query("SELECT n FROM News n " +
@@ -16,4 +19,9 @@ public interface NewsRepository extends JpaRepository<News, Long> {
             "AND (:cursor IS NULL OR n.id < :cursor) " +
             "ORDER BY n.id DESC")
     Slice<News> findByStockIdWithCursor(@Param("stockId") Long stockId, @Param("cursor") Long cursor, Pageable pageable);
+
+    @Query("SELECT n FROM News n " +
+            "WHERE NOT EXISTS (SELECT 1 FROM NewsAnalysis na WHERE na.news.id = n.id) " +
+            "ORDER BY n.id DESC")
+    List<News> findUnanalyzedNews(Pageable pageable);
 }
