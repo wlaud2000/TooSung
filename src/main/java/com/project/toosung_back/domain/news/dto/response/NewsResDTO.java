@@ -26,6 +26,7 @@ public class NewsResDTO {
             Long newsId,
             String title,
             String summary,
+            String sentiment,
             String url,
             LocalDateTime publishedAt,
             String source

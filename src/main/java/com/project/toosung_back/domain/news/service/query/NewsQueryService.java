@@ -4,6 +4,7 @@ import com.project.toosung_back.domain.news.converter.NewsConverter;
 import com.project.toosung_back.domain.news.dto.response.NewsResDTO;
 import com.project.toosung_back.domain.news.entity.News;
 import com.project.toosung_back.domain.news.entity.NewsAnalysis;
+import com.project.toosung_back.domain.news.enums.Sentiment;
 import com.project.toosung_back.domain.news.exception.NewsErrorCode;
 import com.project.toosung_back.domain.news.exception.NewsException;
 import com.project.toosung_back.domain.news.repository.NewsAnalysisRepository;
@@ -39,8 +40,10 @@ public class NewsQueryService {
     }
 
     @Transactional(readOnly = true)
-    public NewsResDTO.NewsList getNews(Long stockId, Long cursor, int size) {
-        Slice<News> slice = newsRepository.findByStockIdWithCursor(stockId, cursor, PageRequest.of(0, size));
+    public NewsResDTO.NewsList getNews(Long stockId, Long cursor, int size, Sentiment sentiment) {
+        Slice<News> slice = (sentiment != null)
+                ? newsRepository.findByStockIdAndSentimentWithCursor(stockId, sentiment, cursor, PageRequest.of(0, size))
+                : newsRepository.findByStockIdWithCursor(stockId, cursor, PageRequest.of(0, size));
 
         List<Long> newsIds = slice.getContent().stream()
                 .map(News::getId)

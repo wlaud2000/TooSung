@@ -31,6 +31,7 @@ public class NewsConverter {
                 .newsId(news.getId())
                 .title(news.getTitle())
                 .summary(analysis != null ? analysis.getSummary() : null)
+                .sentiment(analysis != null ? analysis.getSentiment().name() : null)
                 .url(news.getUrl())
                 .publishedAt(news.getPublishedAt())
                 .source(news.getSource())

@@ -2,6 +2,7 @@ package com.project.toosung_back.domain.news.controller;
 
 import com.project.toosung_back.domain.news.controller.docs.NewsDocs;
 import com.project.toosung_back.domain.news.dto.response.NewsResDTO;
+import com.project.toosung_back.domain.news.enums.Sentiment;
 import com.project.toosung_back.domain.news.service.query.NewsQueryService;
 import com.project.toosung_back.global.apiPayload.CustomResponse;
 import lombok.RequiredArgsConstructor;
@@ -32,9 +33,10 @@ public class NewsController implements NewsDocs {
     public CustomResponse<NewsResDTO.NewsList> getNews(
             @RequestParam Long stockId,
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Sentiment sentiment
     ) {
-        NewsResDTO.NewsList dto = newsQueryService.getNews(stockId, cursor, size);
+        NewsResDTO.NewsList dto = newsQueryService.getNews(stockId, cursor, size, sentiment);
         return CustomResponse.onSuccess("뉴스 목록 조회 성공", dto);
     }
 }

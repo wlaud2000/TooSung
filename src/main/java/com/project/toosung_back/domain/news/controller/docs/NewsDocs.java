@@ -1,6 +1,7 @@
 package com.project.toosung_back.domain.news.controller.docs;
 
 import com.project.toosung_back.domain.news.dto.response.NewsResDTO;
+import com.project.toosung_back.domain.news.enums.Sentiment;
 import com.project.toosung_back.global.apiPayload.CustomResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -68,7 +69,7 @@ public interface NewsDocs {
 
     @Operation(
             summary = "관심 종목 뉴스 목록 조회",
-            description = "특정 종목의 뉴스 목록을 커서 기반 페이지네이션으로 최신순으로 조회합니다."
+            description = "특정 종목의 뉴스 목록을 커서 기반 페이지네이션으로 최신순으로 조회합니다. sentiment 파라미터로 호재/악재/중립 필터링이 가능합니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -86,7 +87,8 @@ public interface NewsDocs {
                                                 {
                                                     "newsId": 42,
                                                     "title": "삼성전자, 3분기 영업이익 10조 돌파",
-                                                    "summary": null,
+                                                    "summary": "삼성전자가 3분기 영업이익 10조원을 달성했습니다.",
+                                                    "sentiment": "POSITIVE",
                                                     "url": "https://...",
                                                     "publishedAt": "2026-04-02T09:30:00",
                                                     "source": "네이버뉴스"
@@ -122,6 +124,7 @@ public interface NewsDocs {
     CustomResponse<NewsResDTO.NewsList> getNews(
             @Parameter(description = "종목 ID", required = true, example = "1") Long stockId,
             @Parameter(description = "커서 (이전 응답의 nextCursor, 첫 페이지는 생략)", example = "42") Long cursor,
-            @Parameter(description = "페이지 크기 (기본값: 20)", example = "20") int size
+            @Parameter(description = "페이지 크기 (기본값: 20)", example = "20") int size,
+            @Parameter(description = "감성 필터 (POSITIVE/NEGATIVE/NEUTRAL, 생략 시 전체 조회)") Sentiment sentiment
     );
 }

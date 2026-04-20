@@ -25,8 +25,11 @@ public class NewsAnalysisPrompt {
             규칙:
             - summary: 뉴스의 핵심을 투자자 관점에서 3개의 문장으로 요약
             - keyPoints: 투자자가 주목해야 할 핵심 포인트 2~3개
-            - sentiment: 해당 뉴스가 주가에 미치는 영향 방향 (POSITIVE/NEGATIVE/NEUTRAL)
-            - sentimentReason: 감성 판단의 근거를 1문장으로 설명
+            - sentiment: 아래 기준으로 판단
+                POSITIVE (호재): 실적 개선, 수주·계약 체결, 신제품 출시, 규제 완화, 배당 증가·자사주 매입 등 주가에 긍정적 영향이 예상될 때
+                NEGATIVE (악재): 실적 악화, 소송·제재·벌금, 규제 강화, 경영진 이슈, 공급망 차질 등 주가에 부정적 영향이 예상될 때
+                NEUTRAL: 단순 현황 보고, 업계 동향, 정보성 기사 등 주가 영향이 불분명하거나 양면적일 때
+            - sentimentReason: 위 기준 중 어떤 항목에 해당하는지 포함해 1문장으로 설명
             """;
 
     private NewsAnalysisPrompt() {}
