@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface DisclosureRepository extends JpaRepository<Disclosure, Long> {
@@ -25,4 +26,9 @@ public interface DisclosureRepository extends JpaRepository<Disclosure, Long> {
                                       @Param("cursor") Long cursor,
                                       @Param("type") String type,
                                       Pageable pageable);
+
+    @Query("SELECT d FROM Disclosure d JOIN FETCH d.stock " +
+            "WHERE NOT EXISTS (SELECT 1 FROM DisclosureAnalysis da WHERE da.disclosure.id = d.id) " +
+            "ORDER BY d.id DESC")
+    List<Disclosure> findUnanalyzedDisclosures(Pageable pageable);
 }
