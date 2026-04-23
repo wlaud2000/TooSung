@@ -11,6 +11,7 @@ import com.project.toosung_back.domain.news.repository.NewsAnalysisRepository;
 import com.project.toosung_back.domain.news.repository.NewsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ public class NewsQueryService {
         return NewsConverter.toNewsDetail(news, analysis);
     }
 
+    @Cacheable(cacheNames = "news", key = "#stockId + ':cursor:' + #cursor + ':size:' + #size")
     @Transactional(readOnly = true)
     public NewsResDTO.NewsList getNews(Long stockId, Long cursor, int size, Sentiment sentiment) {
         Slice<News> slice = (sentiment != null)
