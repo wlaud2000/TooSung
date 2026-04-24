@@ -4,7 +4,7 @@ import java.util.List;
 
 public record BriefingResult(
         String title,
-        String sumary,
+        String summary,
         List<Long> newsIds
 ) {
 }
