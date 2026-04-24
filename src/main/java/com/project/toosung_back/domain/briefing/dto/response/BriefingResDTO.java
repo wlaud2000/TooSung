@@ -7,7 +7,8 @@ public class BriefingResDTO {
     public record BriefingDetail(
             String title,
             String summary,
-            List<Long> newsIds
+            List<Long> newsIds,
+            List<Long> disclosureIds
     ) {
     }
 }

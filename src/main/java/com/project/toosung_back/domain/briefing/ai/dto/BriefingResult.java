@@ -5,6 +5,7 @@ import java.util.List;
 public record BriefingResult(
         String title,
         String summary,
-        List<Long> newsIds
+        List<Long> newsIds,
+        List<Long> disclosureIds
 ) {
 }

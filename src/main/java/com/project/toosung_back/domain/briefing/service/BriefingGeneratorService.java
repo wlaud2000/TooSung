@@ -46,12 +46,16 @@ public class BriefingGeneratorService {
         String rawJson = response.choices().get(0).message().content();
         BriefingResult raw = objectMapper.readValue(rawJson, BriefingResult.class);
 
-        return validateNewsIds(raw, todayResult.newsList());
+        List<Long> disclosureIds = todayResult.disclosureList().stream()
+                .map(da -> da.getDisclosure().getId())
+                .toList();
+
+        return validateAndBuild(raw, todayResult.newsList(), disclosureIds);
     }
 
-    private BriefingResult validateNewsIds(BriefingResult raw, List<NewsAnalysis> newsList) {
+    private BriefingResult validateAndBuild(BriefingResult raw, List<NewsAnalysis> newsList, List<Long> disclosureIds) {
         if (raw.newsIds() == null || raw.newsIds().isEmpty()) {
-            return new BriefingResult(raw.title(), raw.summary(), List.of());
+            return new BriefingResult(raw.title(), raw.summary(), List.of(), disclosureIds);
         }
 
         Set<Long> validIds = newsList.stream()
@@ -67,13 +71,14 @@ public class BriefingGeneratorService {
                     raw.newsIds().size(), sanitized.size());
         }
 
-        return new BriefingResult(raw.title(), raw.summary(), sanitized);
+        return new BriefingResult(raw.title(), raw.summary(), sanitized, disclosureIds);
     }
 
     private BriefingResult emptyResult() {
         return new BriefingResult(
                 "오늘 브리핑을 준비 중입니다.",
                 "아직 분석된 항목이 없어요. 잠시 후 다시 확인해주세요.",
+                List.of(),
                 List.of()
         );
     }
