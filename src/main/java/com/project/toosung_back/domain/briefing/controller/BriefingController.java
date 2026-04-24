@@ -2,6 +2,7 @@ package com.project.toosung_back.domain.briefing.controller;
 
 import com.project.toosung_back.domain.briefing.controller.docs.BriefingDocs;
 import com.project.toosung_back.domain.briefing.dto.response.BriefingResDTO;
+import com.project.toosung_back.domain.briefing.dto.response.BriefingSourceResDTO;
 import com.project.toosung_back.domain.briefing.service.query.BriefingQueryService;
 import com.project.toosung_back.global.apiPayload.CustomResponse;
 import com.project.toosung_back.global.security.annotation.CurrentUser;
@@ -23,5 +24,12 @@ public class BriefingController implements BriefingDocs {
     public CustomResponse<BriefingResDTO.BriefingDetail> getTodayBriefing(@CurrentUser AuthUser authUser) {
         BriefingResDTO.BriefingDetail dto = briefingQueryService.getTodayBriefing(authUser.getMemberId());
         return CustomResponse.onSuccess("오늘의 브리핑 조회 성공", dto);
+    }
+
+    @Override
+    @GetMapping("/today/sources")
+    public CustomResponse<BriefingSourceResDTO.SourceList> getTodaySources(@CurrentUser AuthUser authUser) {
+        BriefingSourceResDTO.SourceList dto = briefingQueryService.getSources(authUser.getMemberId());
+        return CustomResponse.onSuccess("브리핑 참고 목록 조회 성공", dto);
     }
 }

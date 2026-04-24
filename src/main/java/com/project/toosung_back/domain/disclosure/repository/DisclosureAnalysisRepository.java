@@ -16,6 +16,9 @@ public interface DisclosureAnalysisRepository extends JpaRepository<DisclosureAn
 
     Optional<DisclosureAnalysis> findByDisclosureId(Long disclosureId);
 
+    @Query("SELECT da FROM DisclosureAnalysis da JOIN FETCH da.disclosure WHERE da.disclosure.id IN :disclosureIds")
+    List<DisclosureAnalysis> findWithDisclosureByDisclosureIdIn(@Param("disclosureIds") List<Long> disclosureIds);
+
     @Query("SELECT da FROM DisclosureAnalysis da " +
             "JOIN FETCH da.disclosure d " +
             "JOIN FETCH d.stock " +
