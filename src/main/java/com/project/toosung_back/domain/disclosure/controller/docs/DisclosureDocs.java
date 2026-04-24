@@ -37,10 +37,9 @@ public interface DisclosureDocs {
                                             "stockSymbol": "005930",
                                             "stockName": "삼성전자",
                                             "rawData": "{\\"status\\":\\"000\\",\\"list\\":[...]}",
-                                            "aiSummary": null,
-                                            "aiImpact": null,
-                                            "aiInvestmentPoint": null,
-                                            "aiAnalyzedAt": null
+                                            "simpleSummary": "삼성전자가 신주 1,000만 주를 발행해 약 5,000억 원을 조달합니다. 조달 자금은 반도체 설비 투자에 사용될 예정입니다. 기존 주주 입장에서는 주식 수가 늘어나는 유상증자입니다.",
+                                            "investmentPoint": "신주 발행으로 주식 수가 약 0.2% 증가해 기존 주주 지분이 소폭 희석됩니다. 조달 목적이 설비 투자인 만큼 단기 희석보다 장기 성장 가능성에 주목할 필요가 있습니다.",
+                                            "analyzedAt": "2026-03-28T02:15:00"
                                         }
                                     }
                                     """)
