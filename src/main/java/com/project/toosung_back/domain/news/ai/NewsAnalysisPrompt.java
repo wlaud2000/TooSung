@@ -16,6 +16,7 @@ public class NewsAnalysisPrompt {
             아래 JSON 형식으로만 응답하세요. JSON 외의 텍스트는 절대 포함하지 마세요.
 
             {
+              "isStockRelevant": true 또는 false,
               "summary": ["투자자 관점 핵심 첫 번째 문장", "두 번째 문장", "세 번째 문장"],
               "keyPoints": ["핵심 포인트 1", "핵심 포인트 2"],
               "sentiment": "POSITIVE 또는 NEGATIVE 또는 NEUTRAL",
@@ -23,6 +24,10 @@ public class NewsAnalysisPrompt {
             }
 
             규칙:
+            - isStockRelevant: 아래 기준으로 판단
+                true: 해당 기업의 실적·사업·제품·계약·규제·경영진 등 주가에 직접적 영향을 줄 수 있는 내용
+                false: 채용·인사시험·사내 행사·CSR 활동·단순 기업명 언급 등 주가와 무관한 내용
+            - isStockRelevant가 false이면 summary, keyPoints, sentiment, sentimentReason은 빈 값으로 반환
             - summary: 뉴스의 핵심을 투자자 관점에서 3개의 문장으로 요약
             - keyPoints: 투자자가 주목해야 할 핵심 포인트 2~3개
             - sentiment: 아래 기준으로 판단

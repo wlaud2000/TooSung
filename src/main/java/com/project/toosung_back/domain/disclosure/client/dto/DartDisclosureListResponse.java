@@ -7,7 +7,7 @@ import java.util.List;
 public record DartDisclosureListResponse(
         String status,
         String message,
-        @JsonProperty("total_count") int totalCount,
+        @JsonProperty("total_count") Integer totalCount,
         List<DartItem> list
 ) {
     public record DartItem(

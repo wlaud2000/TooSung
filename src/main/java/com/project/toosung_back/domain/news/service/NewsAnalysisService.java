@@ -38,39 +38,40 @@ public class NewsAnalysisService {
 
     @Async("newsAnalysisExecutor")
     public void analyzeUnanalyzedNews() {
-        List<News> newsList = newsRepository.findUnanalyzedNews(PageRequest.of(0, BATCH_SIZE));
-        if (newsList.isEmpty()) {
-            log.info("[NewsAnalysisService] 분석 대상 뉴스 없음");
-            return;
-        }
+        int totalSuccess = 0;
+        int totalFail = 0;
 
-        log.info("[NewsAnalysisService] 분석 시작 - {}건", newsList.size());
+        while (true) {
+            List<News> newsList = newsRepository.findUnanalyzedNews(PageRequest.of(0, BATCH_SIZE));
+            if (newsList.isEmpty()) {
+                break;
+            }
 
-        List<Long> newsIds = newsList.stream().map(News::getId).toList();
+            log.info("[NewsAnalysisService] 분석 배치 시작 - {}건", newsList.size());
 
-        Map<Long, String> newsIdToStockName = newsStockRepository.findAllByNewsIdIn(newsIds)
-                .stream()
-                .collect(Collectors.toMap(
-                        ns -> ns.getNews().getId(),
-                        ns -> ns.getStock().getName(),
-                        (a, b) -> a
-                ));
+            List<Long> newsIds = newsList.stream().map(News::getId).toList();
 
-        int successCount = 0;
-        int failCount = 0;
+            Map<Long, String> newsIdToStockName = newsStockRepository.findAllByNewsIdIn(newsIds)
+                    .stream()
+                    .collect(Collectors.toMap(
+                            ns -> ns.getNews().getId(),
+                            ns -> ns.getStock().getName(),
+                            (a, b) -> a
+                    ));
 
-        for (News news : newsList) {
-            String stockName = newsIdToStockName.getOrDefault(news.getId(), "알 수 없음");
-            try {
-                analyzeAndSave(news, stockName);
-                successCount++;
-            } catch (Exception e) {
-                log.error("[NewsAnalysisService] 분석 실패 - newsId={}, error={}", news.getId(), e.getMessage());
-                failCount++;
+            for (News news : newsList) {
+                String stockName = newsIdToStockName.getOrDefault(news.getId(), "알 수 없음");
+                try {
+                    analyzeAndSave(news, stockName);
+                    totalSuccess++;
+                } catch (Exception e) {
+                    log.error("[NewsAnalysisService] 분석 실패 - newsId={}, error={}", news.getId(), e.getMessage());
+                    totalFail++;
+                }
             }
         }
 
-        log.info("[NewsAnalysisService] 분석 완료 - 성공: {}건, 실패: {}건", successCount, failCount);
+        log.info("[NewsAnalysisService] 전체 분석 완료 - 성공: {}건, 실패: {}건", totalSuccess, totalFail);
     }
 
     private void analyzeAndSave(News news, String stockName) throws Exception {
@@ -80,11 +81,15 @@ public class NewsAnalysisService {
         String rawJson = response.choices().get(0).message().content();
         NewsAnalysisResult result = objectMapper.readValue(rawJson, NewsAnalysisResult.class);
 
-        String summary = String.join("\n", result.summary());
-        String keyPoints = (result.keyPoints() != null && !result.keyPoints().isEmpty())
+        boolean isRelevant = result.isStockRelevant();
+
+        String summary = (isRelevant && result.summary() != null) ? String.join("\n", result.summary()) : "";
+        String keyPoints = (isRelevant && result.keyPoints() != null && !result.keyPoints().isEmpty())
                 ? String.join("\n", result.keyPoints())
                 : null;
-        Sentiment sentiment = Sentiment.valueOf(result.sentiment());
+        Sentiment sentiment = (isRelevant && result.sentiment() != null && !result.sentiment().isBlank())
+                ? Sentiment.valueOf(result.sentiment())
+                : Sentiment.NEUTRAL;
 
         NewsAnalysis analysis = NewsAnalysis.builder()
                 .news(news)
@@ -92,6 +97,7 @@ public class NewsAnalysisService {
                 .keyPoints(keyPoints)
                 .sentiment(sentiment)
                 .sentimentReason(result.sentimentReason())
+                .isRelevant(isRelevant)
                 .analyzedAt(LocalDateTime.now())
                 .build();
 

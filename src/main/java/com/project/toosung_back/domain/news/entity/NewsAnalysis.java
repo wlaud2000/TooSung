@@ -36,6 +36,9 @@ public class NewsAnalysis extends BaseEntity {
     @Column(name = "sentiment_reason", columnDefinition = "TEXT")
     private String sentimentReason;
 
+    @Column(name = "is_relevant", nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private boolean isRelevant;
+
     @Column(name = "analyzed_at", nullable = false)
     private LocalDateTime analyzedAt;
 }

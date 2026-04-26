@@ -16,7 +16,9 @@ public interface NewsRepository extends JpaRepository<News, Long> {
 
     @Query("SELECT n FROM News n " +
             "JOIN NewsStock ns ON ns.news = n " +
+            "JOIN NewsAnalysis na ON na.news = n " +
             "WHERE ns.stock.id = :stockId " +
+            "AND na.isRelevant = true " +
             "AND (:cursor IS NULL OR n.id < :cursor) " +
             "ORDER BY n.id DESC")
     Slice<News> findByStockIdWithCursor(@Param("stockId") Long stockId, @Param("cursor") Long cursor, Pageable pageable);
@@ -25,6 +27,7 @@ public interface NewsRepository extends JpaRepository<News, Long> {
             "JOIN NewsStock ns ON ns.news = n " +
             "JOIN NewsAnalysis na ON na.news.id = n.id " +
             "WHERE ns.stock.id = :stockId " +
+            "AND na.isRelevant = true " +
             "AND na.sentiment = :sentiment " +
             "AND (:cursor IS NULL OR n.id < :cursor) " +
             "ORDER BY n.id DESC")

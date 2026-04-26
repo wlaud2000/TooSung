@@ -6,5 +6,6 @@ public record NewsAnalysisResult(
         List<String> summary,
         List<String> keyPoints,
         String sentiment,
-        String sentimentReason
+        String sentimentReason,
+        boolean isStockRelevant
 ) {}

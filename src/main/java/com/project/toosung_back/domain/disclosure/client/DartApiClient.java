@@ -56,7 +56,7 @@ public class DartApiClient {
                 return Collections.emptyList();
             }
 
-            if (response.totalCount() > 100) {
+            if (response.totalCount() != null && response.totalCount() > 100) {
                 log.warn("[DartApiClient] DS001 total_count({}) > 100 - 초과분 누락 가능: pblntfTy={}", response.totalCount(), pblntfTy);
             }
 
