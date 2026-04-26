@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface NewsRepository extends JpaRepository<News, Long> {
@@ -37,4 +38,10 @@ public interface NewsRepository extends JpaRepository<News, Long> {
             "WHERE NOT EXISTS (SELECT 1 FROM NewsAnalysis na WHERE na.news.id = n.id) " +
             "ORDER BY n.id DESC")
     List<News> findUnanalyzedNews(Pageable pageable);
+
+    @Query("SELECT n.title FROM News n " +
+            "JOIN NewsStock ns ON ns.news = n " +
+            "WHERE ns.stock.id = :stockId " +
+            "AND n.publishedAt >= :since")
+    List<String> findTitlesByStockIdSince(@Param("stockId") Long stockId, @Param("since") LocalDateTime since);
 }

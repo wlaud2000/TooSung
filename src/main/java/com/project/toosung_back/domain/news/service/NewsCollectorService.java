@@ -18,8 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -60,6 +63,9 @@ public class NewsCollectorService {
         int savedCount = 0;
         int skippedCount = 0;
 
+        List<String> recentTitles = newsRepository.findTitlesByStockIdSince(
+                stock.getId(), LocalDateTime.now().minusHours(24));
+
         for (NaverNewsResponse.NaverNewsItem item : items) {
             String url = (item.originalLink() != null && !item.originalLink().isBlank())
                     ? item.originalLink()
@@ -75,10 +81,17 @@ public class NewsCollectorService {
                 continue;
             }
 
+            String title = cleanHtml(item.title());
+
+            if (isSimilarToAny(title, recentTitles)) {
+                skippedCount++;
+                continue;
+            }
+
             News news = News.builder()
                     .externalId(url)
                     .source("naver")
-                    .title(cleanHtml(item.title()))
+                    .title(title)
                     .url(url)
                     .publishedAt(parseDate(item.pubDate()))
                     .build();
@@ -91,11 +104,36 @@ public class NewsCollectorService {
                     .build();
 
             newsStockRepository.save(newsStock);
+            recentTitles.add(title);
             savedCount++;
         }
 
         log.info("[NewsScheduler] 종목: {} ({}) - 저장: {}건, 중복 스킵: {}건",
                 stock.getName(), stock.getSymbol(), savedCount, skippedCount);
+    }
+
+    private boolean isSimilarToAny(String title, List<String> candidates) {
+        return candidates.stream().anyMatch(c -> jaccardSimilarity(title, c) >= 0.5);
+    }
+
+    private double jaccardSimilarity(String a, String b) {
+        Set<String> wordsA = tokenize(a);
+        Set<String> wordsB = tokenize(b);
+
+        Set<String> intersection = new HashSet<>(wordsA);
+        intersection.retainAll(wordsB);
+
+        Set<String> union = new HashSet<>(wordsA);
+        union.addAll(wordsB);
+
+        if (union.isEmpty()) return 0.0;
+        return (double) intersection.size() / union.size();
+    }
+
+    private Set<String> tokenize(String title) {
+        return Arrays.stream(title.split("[\\s\\p{Punct}]+"))
+                .filter(w -> w.length() >= 2)
+                .collect(java.util.stream.Collectors.toSet());
     }
 
     private String cleanHtml(String html) {

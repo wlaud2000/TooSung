@@ -15,7 +15,7 @@ public class CacheEvictService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     public void evictNewsCache(Long stockId) {
-        deleteByPattern("news::" + stockId + ":*");
+        deleteByPattern("news:list:" + stockId + ":*");
     }
 
     public void evictDisclosureCache(Long stockId) {
