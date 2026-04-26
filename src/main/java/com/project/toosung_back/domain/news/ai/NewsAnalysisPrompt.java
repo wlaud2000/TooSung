@@ -25,8 +25,11 @@ public class NewsAnalysisPrompt {
 
             규칙:
             - isStockRelevant: 아래 기준으로 판단
-                true: 해당 기업의 실적·사업·제품·계약·규제·경영진 등 주가에 직접적 영향을 줄 수 있는 내용
-                false: 채용·인사시험·사내 행사·CSR 활동·단순 기업명 언급 등 주가와 무관한 내용
+                true: 해당 기업이 기사의 주체이며, 실적·사업·제품·계약·규제·경영진 등 주가에 직접적 영향을 줄 수 있는 내용
+                false: 다음 중 하나에 해당하는 경우
+                  - 채용·인사시험·사내 행사·CSR 활동 등 주가와 무관한 내용
+                  - 증권사·애널리스트·펀드 등 타 기관이 기사의 주체이며 해당 기업은 분석 대상으로만 언급된 경우 (예: "키움증권, OO 목표주가 상향")
+                  - 타 기업 기사에서 해당 기업이 부수적으로 언급만 된 경우
             - isStockRelevant가 false이면 summary, keyPoints, sentiment, sentimentReason은 빈 값으로 반환
             - summary: 뉴스의 핵심을 투자자 관점에서 3개의 문장으로 요약
             - keyPoints: 투자자가 주목해야 할 핵심 포인트 2~3개

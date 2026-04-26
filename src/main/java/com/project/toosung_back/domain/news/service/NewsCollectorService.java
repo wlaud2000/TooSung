@@ -113,7 +113,7 @@ public class NewsCollectorService {
     }
 
     private boolean isSimilarToAny(String title, List<String> candidates) {
-        return candidates.stream().anyMatch(c -> jaccardSimilarity(title, c) >= 0.5);
+        return candidates.stream().anyMatch(c -> jaccardSimilarity(title, c) >= 0.6);
     }
 
     private double jaccardSimilarity(String a, String b) {
