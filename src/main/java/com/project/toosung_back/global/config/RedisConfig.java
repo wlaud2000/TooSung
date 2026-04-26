@@ -1,5 +1,6 @@
 package com.project.toosung_back.global.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -33,19 +34,21 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(connectionFactory); // Redis 연결 설정
-        redisTemplate.setKeySerializer(new StringRedisSerializer()); // Redis 키 직렬화 설정
-        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // Redis 값 직렬화 설정
+        redisTemplate.setConnectionFactory(connectionFactory);
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer(redisObjectMapper(objectMapper)));
         return redisTemplate;
     }
 
     @Bean
-    public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+    public CacheManager cacheManager(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisObjectMapper(objectMapper));
+
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer))
                 .entryTtl(Duration.ofMinutes(60));
 
         Map<String, RedisCacheConfiguration> cacheConfigurations = Map.of(
@@ -60,4 +63,9 @@ public class RedisConfig {
                 .build();
     }
 
+    // JavaTimeModule이 등록된 ObjectMapper를 그대로 사용
+    // RedisTemplate은 String 값만 저장하므로 타입 정보 불필요
+    private ObjectMapper redisObjectMapper(ObjectMapper objectMapper) {
+        return objectMapper.copy();
+    }
 }
