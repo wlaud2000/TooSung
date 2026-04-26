@@ -11,6 +11,8 @@ public enum WatchlistErrorCode implements BaseErrorCode {
 
     WATCHLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "WATCHLIST-001", "존재하지 않는 관심 종목입니다."),
     WATCHLIST_ACCESS_DENIED(HttpStatus.FORBIDDEN, "WATCHLIST-002", "해당 관심 종목에 접근할 권한이 없습니다."),
+    WATCHLIST_ALREADY_EXISTS(HttpStatus.CONFLICT, "WATCHLIST-003", "이미 관심 종목에 추가된 종목입니다."),
+    STOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "WATCHLIST-004", "존재하지 않는 종목입니다."),
     ;
 
     private final HttpStatus httpStatus;

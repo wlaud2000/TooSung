@@ -8,6 +8,7 @@ public class WatchlistResDTO {
 
     @Builder
     public record WatchlistItem(
+            Long watchlistId,
             Long stockId,
             String name,
             String code,

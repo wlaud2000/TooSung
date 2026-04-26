@@ -1,5 +1,6 @@
 package com.project.toosung_back.domain.watchlist.controller.docs;
 
+import com.project.toosung_back.domain.watchlist.dto.request.WatchlistReqDTO;
 import com.project.toosung_back.domain.watchlist.dto.response.WatchlistResDTO;
 import com.project.toosung_back.global.apiPayload.CustomResponse;
 import com.project.toosung_back.global.security.userdetails.AuthUser;
@@ -14,6 +15,67 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Watchlist API", description = "관심 종목 관련 API")
 public interface WatchlistDocs {
+
+    @Operation(
+            summary = "관심 종목 추가",
+            description = "로그인한 사용자의 관심 종목을 추가합니다. 이미 추가된 종목이면 409를 반환합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "추가 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                                {
+                                    "isSuccess": true,
+                                    "code": "200",
+                                    "message": "관심 종목 추가 성공",
+                                    "result": {
+                                        "stockId": 1,
+                                        "name": "삼성전자",
+                                        "code": "005930",
+                                        "market": "KOSPI"
+                                    }
+                                }
+                                """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "존재하지 않는 종목",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                                {
+                                    "isSuccess": false,
+                                    "code": "WATCHLIST-004",
+                                    "message": "존재하지 않는 종목입니다.",
+                                    "result": null
+                                }
+                                """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 추가된 종목",
+                    content = @Content(
+                            schema = @Schema(implementation = CustomResponse.class),
+                            examples = @ExampleObject(value = """
+                                {
+                                    "isSuccess": false,
+                                    "code": "WATCHLIST-003",
+                                    "message": "이미 관심 종목에 추가된 종목입니다.",
+                                    "result": null
+                                }
+                                """)
+                    )
+            )
+    })
+    CustomResponse<WatchlistResDTO.WatchlistItem> addWatchlist(
+            @Parameter(hidden = true) AuthUser authUser,
+            WatchlistReqDTO.AddWatchlist reqDTO
+    );
 
     @Operation(
             summary = "관심 종목 목록 조회",
