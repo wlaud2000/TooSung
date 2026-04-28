@@ -66,11 +66,11 @@ public class WebClientConfig {
     public WebClient edgarWebClient() {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-                .responseTimeout(Duration.ofSeconds(15));
+                .responseTimeout(Duration.ofSeconds(15))
+                .compress(true); // gzip 자동 해제
 
         return WebClient.builder()
                 .defaultHeader("User-Agent", "TooSung contact@toosung.com")
-                .defaultHeader("Accept-Encoding", "gzip, deflate")
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .codecs(configurer -> configurer
                         .defaultCodecs()
