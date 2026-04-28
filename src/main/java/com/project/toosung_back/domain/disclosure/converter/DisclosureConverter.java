@@ -37,6 +37,7 @@ public class DisclosureConverter {
                 .disclosureType(disclosure.getDisclosureType())
                 .submittedAt(disclosure.getPublishedAt())
                 .url(disclosure.getUrl())
+                .source(disclosure.getSource() != null ? disclosure.getSource().name() : "DART")
                 .simpleSummary(analysis.map(DisclosureAnalysis::getSimpleSummary).orElse(null))
                 .investmentPoint(analysis.map(DisclosureAnalysis::getInvestmentPoint).orElse(null))
                 .build();

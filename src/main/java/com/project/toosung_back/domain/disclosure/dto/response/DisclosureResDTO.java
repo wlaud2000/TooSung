@@ -29,6 +29,7 @@ public class DisclosureResDTO {
             String disclosureType,
             LocalDateTime submittedAt,
             String url,
+            String source,
             String simpleSummary,
             String investmentPoint
     ) {}

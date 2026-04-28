@@ -1,19 +1,23 @@
 package com.project.toosung_back.domain.disclosure.client.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record EdgarSubmissionsResponse(
         @JsonProperty("cik") String cik,
         @JsonProperty("name") String name,
         @JsonProperty("filings") Filings filings
 ) {
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Filings(
             @JsonProperty("recent") Recent recent
     ) {}
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Recent(
             @JsonProperty("accessionNumber") List<String> accessionNumbers,
             @JsonProperty("filingDate") List<String> filingDates,
