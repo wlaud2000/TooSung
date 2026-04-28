@@ -27,6 +27,10 @@ public class Disclosure extends BaseEntity {
     @Column(name = "dart_id", nullable = false)
     private String dartId;
 
+    @Column(name = "source", length = 10)
+    @Enumerated(EnumType.STRING)
+    private DisclosureSource source;
+
     @Column(name = "disclosure_type", nullable = false, length = 200)
     private String disclosureType;
 

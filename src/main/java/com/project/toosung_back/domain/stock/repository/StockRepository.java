@@ -15,4 +15,8 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     List<Stock> findByDartCorpCodeIsNull();
 
     long countByDartCorpCodeIsNull();
+
+    List<Stock> findByCountryAndEdgarCikIsNull(String country);
+
+    List<Stock> findByCountryAndEdgarCikIsNotNull(String country);
 }

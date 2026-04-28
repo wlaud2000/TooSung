@@ -62,6 +62,23 @@ public class WebClientConfig {
     }
 
     @Bean
+    @Qualifier("edgarWebClient")
+    public WebClient edgarWebClient() {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                .responseTimeout(Duration.ofSeconds(15));
+
+        return WebClient.builder()
+                .defaultHeader("User-Agent", "TooSung contact@toosung.com")
+                .defaultHeader("Accept-Encoding", "gzip, deflate")
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .codecs(configurer -> configurer
+                        .defaultCodecs()
+                        .maxInMemorySize(10 * 1024 * 1024)) // 10MB
+                .build();
+    }
+
+    @Bean
     @Qualifier("openAiWebClient")
     public WebClient openAiWebClient() {
         HttpClient httpClient = HttpClient.create()

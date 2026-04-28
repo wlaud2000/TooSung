@@ -3,6 +3,7 @@ package com.project.toosung_back.domain.disclosure.service;
 import com.project.toosung_back.domain.disclosure.client.DartApiClient;
 import com.project.toosung_back.domain.disclosure.client.dto.DartDisclosureListResponse;
 import com.project.toosung_back.domain.disclosure.entity.Disclosure;
+import com.project.toosung_back.domain.disclosure.entity.DisclosureSource;
 import com.project.toosung_back.domain.disclosure.repository.DisclosureRepository;
 import com.project.toosung_back.domain.stock.entity.Stock;
 import com.project.toosung_back.domain.watchlist.repository.WatchlistRepository;
@@ -92,6 +93,7 @@ public class DisclosureCollectorService {
                         .disclosureType(item.reportNm())
                         .url("https://dart.fss.or.kr/dsaf001/main.do?rcpNo=" + item.rceptNo())
                         .publishedAt(publishedAt)
+                        .source(DisclosureSource.DART)
                         .stock(stock)
                         .build()
         );
