@@ -1,6 +1,7 @@
 package com.project.toosung_back.domain.disclosure.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.toosung_back.domain.disclosure.client.dto.EdgarSubmissionsResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,17 +24,21 @@ public class EdgarApiClient {
     @Qualifier("edgarWebClient")
     private final WebClient edgarWebClient;
 
+    private final ObjectMapper objectMapper;
+
     /**
      * CIK로 기업의 최근 공시 목록 조회
      * @param cik 10자리 zero-padded CIK
      */
     public EdgarSubmissionsResponse fetchSubmissions(String cik) {
         try {
-            return edgarWebClient.get()
+            String json = edgarWebClient.get()
                     .uri(String.format(SUBMISSIONS_URL, cik))
                     .retrieve()
-                    .bodyToMono(EdgarSubmissionsResponse.class)
+                    .bodyToMono(String.class)
                     .block();
+            if (json == null) return null;
+            return objectMapper.readValue(json, EdgarSubmissionsResponse.class);
         } catch (Exception e) {
             log.error("[EdgarApiClient] submissions 조회 실패: cik={}, error={}", cik, e.getMessage());
             return null;
@@ -46,14 +51,15 @@ public class EdgarApiClient {
      */
     public Map<String, String> fetchTickerToCikMap() {
         try {
-            JsonNode root = edgarWebClient.get()
+            String json = edgarWebClient.get()
                     .uri(TICKERS_URL)
                     .retrieve()
-                    .bodyToMono(JsonNode.class)
+                    .bodyToMono(String.class)
                     .block();
 
-            if (root == null) return Collections.emptyMap();
+            if (json == null) return Collections.emptyMap();
 
+            JsonNode root = objectMapper.readTree(json);
             Map<String, String> result = new HashMap<>();
             root.fields().forEachRemaining(entry -> {
                 JsonNode item = entry.getValue();
