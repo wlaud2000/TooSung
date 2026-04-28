@@ -57,7 +57,7 @@ public class WebClientConfig {
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .codecs(configurer -> configurer
                         .defaultCodecs()
-                        .maxInMemorySize(15 * 1024 * 1024)) // 15MB (corpCode.xml ZIP 대응)
+                        .maxInMemorySize(100 * 1024 * 1024)) // 100MB (사업보고서 ZIP 대응)
                 .build();
     }
 
