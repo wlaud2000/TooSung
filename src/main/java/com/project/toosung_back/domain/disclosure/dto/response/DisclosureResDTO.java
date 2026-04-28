@@ -27,7 +27,10 @@ public class DisclosureResDTO {
             Long disclosureId,
             String title,
             String disclosureType,
-            LocalDateTime submittedAt
+            LocalDateTime submittedAt,
+            String url,
+            String simpleSummary,
+            String investmentPoint
     ) {}
 
     @Builder

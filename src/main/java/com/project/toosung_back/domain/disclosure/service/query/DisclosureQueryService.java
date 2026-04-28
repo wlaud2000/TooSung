@@ -19,8 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -62,8 +64,13 @@ public class DisclosureQueryService {
         Slice<Disclosure> slice = disclosureRepository.findDisclosures(
                 stockId, cursor, type, PageRequest.of(0, size));
 
+        List<Long> disclosureIds = slice.getContent().stream().map(Disclosure::getId).toList();
+        Map<Long, DisclosureAnalysis> analysisMap = disclosureAnalysisRepository
+                .findWithDisclosureByDisclosureIdIn(disclosureIds).stream()
+                .collect(Collectors.toMap(da -> da.getDisclosure().getId(), da -> da));
+
         List<DisclosureResDTO.DisclosureItem> items = slice.getContent().stream()
-                .map(DisclosureConverter::toDisclosureItem)
+                .map(d -> DisclosureConverter.toDisclosureItem(d, Optional.ofNullable(analysisMap.get(d.getId()))))
                 .toList();
 
         Long nextCursor = slice.hasNext()

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,38 +34,50 @@ public class DartApiClient {
      * @param date     조회 날짜 (YYYYMMDD)
      */
     public List<DartDisclosureListResponse.DartItem> fetchDisclosureList(String pblntfTy, String date) {
+        List<DartDisclosureListResponse.DartItem> allItems = new ArrayList<>();
+        int pageNo = 1;
+
         try {
-            DartDisclosureListResponse response = dartWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/list.json")
-                            .queryParam("crtfc_key", apiKey)
-                            .queryParam("bgn_de", date)
-                            .queryParam("end_de", date)
-                            .queryParam("pblntf_ty", pblntfTy)
-                            .queryParam("page_count", 100)
-                            .build())
-                    .retrieve()
-                    .bodyToMono(DartDisclosureListResponse.class)
-                    .block();
+            while (true) {
+                final int currentPage = pageNo;
+                DartDisclosureListResponse response = dartWebClient.get()
+                        .uri(uriBuilder -> uriBuilder
+                                .path("/api/list.json")
+                                .queryParam("crtfc_key", apiKey)
+                                .queryParam("bgn_de", date)
+                                .queryParam("end_de", date)
+                                .queryParam("pblntf_ty", pblntfTy)
+                                .queryParam("page_count", 100)
+                                .queryParam("page_no", currentPage)
+                                .build())
+                        .retrieve()
+                        .bodyToMono(DartDisclosureListResponse.class)
+                        .block();
 
-            if (response == null || !"000".equals(response.status())) {
-                String status = response != null ? response.status() : "null";
-                // "020": 조회 결과 없음 (정상 케이스)
-                if (!"020".equals(status)) {
-                    log.warn("[DartApiClient] DS001 비정상 응답: pblntfTy={}, status={}", pblntfTy, status);
+                if (response == null || !"000".equals(response.status())) {
+                    String status = response != null ? response.status() : "null";
+                    if (!"020".equals(status) && pageNo == 1) {
+                        log.warn("[DartApiClient] DS001 비정상 응답: pblntfTy={}, status={}", pblntfTy, status);
+                    }
+                    break;
                 }
-                return Collections.emptyList();
+
+                List<DartDisclosureListResponse.DartItem> pageItems = response.list() != null ? response.list() : Collections.emptyList();
+                allItems.addAll(pageItems);
+
+                int totalCount = response.totalCount() != null ? response.totalCount() : 0;
+                if (allItems.size() >= totalCount || pageItems.isEmpty()) {
+                    break;
+                }
+                pageNo++;
             }
 
-            if (response.totalCount() != null && response.totalCount() > 100) {
-                log.warn("[DartApiClient] DS001 total_count({}) > 100 - 초과분 누락 가능: pblntfTy={}", response.totalCount(), pblntfTy);
-            }
-
-            return response.list() != null ? response.list() : Collections.emptyList();
+            log.info("[DartApiClient] DS001 수집 완료: pblntfTy={}, date={}, 총={}건", pblntfTy, date, allItems.size());
+            return allItems;
 
         } catch (Exception e) {
             log.error("[DartApiClient] DS001 수집 실패: pblntfTy={}, error={}", pblntfTy, e.getMessage());
-            return Collections.emptyList();
+            return allItems;
         }
     }
 

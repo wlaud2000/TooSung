@@ -30,11 +30,6 @@ public class DisclosureCollectorService {
 
     private static final List<String> PBLNTF_TY_LIST = List.of("B", "A");
 
-    private static final List<String> REPORT_KEYWORDS = List.of(
-            "유상증자", "합병", "자기주식", "전환사채", "분할",
-            "사업보고서", "분기보고서", "반기보고서"
-    );
-
     private static final Map<String, String> KEYWORD_TO_DS005_ENDPOINT = Map.of(
             "유상증자", "/api/piicDecsn.json",
             "합병", "/api/mrgrDecsn.json",
@@ -43,7 +38,13 @@ public class DisclosureCollectorService {
             "분할", "/api/dssDecsn.json"
     );
 
+    private static final List<String> REPORT_KEYWORDS = List.copyOf(KEYWORD_TO_DS005_ENDPOINT.keySet());
+
     public void collectAll() {
+        collectForDate(LocalDate.now());
+    }
+
+    public void collectForDate(LocalDate date) {
         List<Stock> stocks = watchlistRepository.findAllDistinctStocks();
         if (stocks.isEmpty()) {
             log.info("[DisclosureCollectorService] 관심 종목 없음. 수집 스킵");
@@ -53,20 +54,20 @@ public class DisclosureCollectorService {
         Map<String, Stock> symbolToStock = stocks.stream()
                 .collect(Collectors.toMap(Stock::getSymbol, s -> s));
 
-        String today = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-        log.info("[DisclosureCollectorService] 수집 시작: date={}, 관심종목={}개", today, symbolToStock.size());
+        String dateStr = date.format(DateTimeFormatter.BASIC_ISO_DATE);
+        log.info("[DisclosureCollectorService] 수집 시작: date={}, 관심종목={}개", dateStr, symbolToStock.size());
 
         int savedCount = 0;
         for (String pblntfTy : PBLNTF_TY_LIST) {
-            List<DartDisclosureListResponse.DartItem> items = dartApiClient.fetchDisclosureList(pblntfTy, today);
+            List<DartDisclosureListResponse.DartItem> items = dartApiClient.fetchDisclosureList(pblntfTy, dateStr);
             for (DartDisclosureListResponse.DartItem item : items) {
-                if (processItem(item, symbolToStock, today)) {
+                if (processItem(item, symbolToStock, dateStr)) {
                     savedCount++;
                 }
             }
         }
 
-        log.info("[DisclosureCollectorService] 수집 완료: {}건 저장", savedCount);
+        log.info("[DisclosureCollectorService] 수집 완료: date={}, {}건 저장", dateStr, savedCount);
 
         stocks.forEach(stock -> cacheEvictService.evictDisclosureCache(stock.getId()));
     }
@@ -78,9 +79,6 @@ public class DisclosureCollectorService {
 
         Stock stock = symbolToStock.get(item.stockCode());
         if (stock == null) return false;
-
-        String matchedKeyword = matchKeyword(item.reportNm());
-        if (matchedKeyword == null) return false;
 
         if (disclosureRepository.existsByDartId(item.rceptNo())) return false;
 
@@ -98,7 +96,8 @@ public class DisclosureCollectorService {
                         .build()
         );
 
-        String ds005Endpoint = KEYWORD_TO_DS005_ENDPOINT.get(matchedKeyword);
+        String matchedKeyword = matchKeyword(item.reportNm());
+        String ds005Endpoint = matchedKeyword != null ? KEYWORD_TO_DS005_ENDPOINT.get(matchedKeyword) : null;
         if (ds005Endpoint != null) {
             if (stock.getDartCorpCode() == null) {
                 log.warn("[DisclosureCollectorService] dart_corp_code 없음 - DS005 스킵: symbol={}", stock.getSymbol());
@@ -117,6 +116,7 @@ public class DisclosureCollectorService {
     }
 
     private String matchKeyword(String reportNm) {
+        if (reportNm == null) return null;
         for (String keyword : REPORT_KEYWORDS) {
             if (reportNm.contains(keyword)) return keyword;
         }

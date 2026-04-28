@@ -19,7 +19,7 @@ public class CacheEvictService {
     }
 
     public void evictDisclosureCache(Long stockId) {
-        deleteByPattern("disclosure::" + stockId + ":*");
+        deleteByPattern("disclosure:list:" + stockId + ":*");
     }
 
     private void deleteByPattern(String pattern) {

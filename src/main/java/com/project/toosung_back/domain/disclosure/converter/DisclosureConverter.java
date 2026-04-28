@@ -29,13 +29,16 @@ public class DisclosureConverter {
                 .build();
     }
 
-    public static DisclosureResDTO.DisclosureItem toDisclosureItem(Disclosure disclosure) {
+    public static DisclosureResDTO.DisclosureItem toDisclosureItem(Disclosure disclosure, Optional<DisclosureAnalysis> analysis) {
         String title = disclosure.getStock().getName() + " - " + disclosure.getDisclosureType();
         return DisclosureResDTO.DisclosureItem.builder()
                 .disclosureId(disclosure.getId())
                 .title(title)
                 .disclosureType(disclosure.getDisclosureType())
                 .submittedAt(disclosure.getPublishedAt())
+                .url(disclosure.getUrl())
+                .simpleSummary(analysis.map(DisclosureAnalysis::getSimpleSummary).orElse(null))
+                .investmentPoint(analysis.map(DisclosureAnalysis::getInvestmentPoint).orElse(null))
                 .build();
     }
 }
