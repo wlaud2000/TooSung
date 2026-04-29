@@ -32,4 +32,14 @@ public interface NewsAnalysisRepository extends JpaRepository<NewsAnalysis, Long
     List<NewsAnalysis> findTodayByStockIds(@Param("stockIds") List<Long> stockIds,
                                            @Param("from") LocalDateTime from,
                                            Pageable pageable);
+
+    @Query("SELECT ns.stock.id, na.sentiment, COUNT(na) " +
+            "FROM NewsAnalysis na " +
+            "JOIN NewsStock ns ON ns.news.id = na.news.id " +
+            "WHERE ns.stock.id IN :stockIds " +
+            "AND na.news.publishedAt >= :from " +
+            "AND na.isRelevant = true " +
+            "GROUP BY ns.stock.id, na.sentiment")
+    List<Object[]> countSentimentByStockIds(@Param("stockIds") List<Long> stockIds,
+                                            @Param("from") LocalDateTime from);
 }

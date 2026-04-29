@@ -33,4 +33,12 @@ public interface DisclosureRepository extends JpaRepository<Disclosure, Long> {
             "WHERE NOT EXISTS (SELECT 1 FROM DisclosureAnalysis da WHERE da.disclosure.id = d.id) " +
             "ORDER BY d.id DESC")
     List<Disclosure> findUnanalyzedDisclosures(Pageable pageable);
+
+    @Query("SELECT d.stock.id, COUNT(d) " +
+            "FROM Disclosure d " +
+            "WHERE d.stock.id IN :stockIds " +
+            "AND d.publishedAt >= :from " +
+            "GROUP BY d.stock.id")
+    List<Object[]> countByStockIds(@Param("stockIds") List<Long> stockIds,
+                                   @Param("from") java.time.LocalDateTime from);
 }

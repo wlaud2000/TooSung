@@ -22,6 +22,14 @@ public class CacheEvictService {
         deleteByPattern("disclosure:list:" + stockId + ":*");
     }
 
+    public void evictAllBriefingCaches() {
+        deleteByPattern("briefing:*");
+    }
+
+    public void evictAllSectorAnalysisCaches() {
+        deleteByPattern("sector-analysis:*");
+    }
+
     private void deleteByPattern(String pattern) {
         Set<String> keys = redisTemplate.keys(pattern);
         if (keys != null && !keys.isEmpty()) {

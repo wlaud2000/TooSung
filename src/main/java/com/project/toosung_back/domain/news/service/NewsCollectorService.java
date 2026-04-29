@@ -83,7 +83,7 @@ public class NewsCollectorService {
 
             String title = cleanHtml(item.title());
 
-            if (isSimilarToAny(title, recentTitles)) {
+            if (isSimilarToAny(title, recentTitles)) {  // Jaccard 0.4 이상 유사 시 중복 처리
                 skippedCount++;
                 continue;
             }
@@ -113,7 +113,7 @@ public class NewsCollectorService {
     }
 
     private boolean isSimilarToAny(String title, List<String> candidates) {
-        return candidates.stream().anyMatch(c -> jaccardSimilarity(title, c) >= 0.6);
+        return candidates.stream().anyMatch(c -> jaccardSimilarity(title, c) >= 0.4);
     }
 
     private double jaccardSimilarity(String a, String b) {
