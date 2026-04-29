@@ -39,6 +39,20 @@ public class EdgarCollectorService {
         collectSince(LocalDate.now().minusDays(days));
     }
 
+    public void collectBackfillForStocks(List<Stock> stocks, int days) {
+        LocalDate from = LocalDate.now().minusDays(days);
+        log.info("[EdgarCollectorService] 소급 수집 시작: {}개 종목, from={}", stocks.size(), from);
+
+        int totalSaved = 0;
+        for (Stock stock : stocks) {
+            totalSaved += collectForStock(stock, from);
+            rateLimitSleep();
+        }
+
+        log.info("[EdgarCollectorService] 소급 수집 완료: 총 {}건 저장", totalSaved);
+        stocks.forEach(stock -> cacheEvictService.evictDisclosureCache(stock.getId()));
+    }
+
     public void collectSince(LocalDate from) {
         List<Stock> usStocks = watchlistRepository.findAllDistinctStocks().stream()
                 .filter(s -> "US".equals(s.getCountry()) && s.getEdgarCik() != null)
@@ -68,12 +82,13 @@ public class EdgarCollectorService {
             return 0;
         }
 
+        List<EdgarSubmissionsResponse.FilingItem> items = response.toFilingItems();
         int savedCount = 0;
-        for (EdgarSubmissionsResponse.FilingItem filing : response.toFilingItems()) {
+        for (EdgarSubmissionsResponse.FilingItem filing : items) {
             if (!TARGET_FORMS.contains(filing.form())) continue;
 
             LocalDate filingDate = LocalDate.parse(filing.filingDate(), DateTimeFormatter.ISO_LOCAL_DATE);
-            if (filingDate.isBefore(from)) break; // 날짜 역순 정렬이므로 이후는 모두 범위 밖
+            if (filingDate.isBefore(from)) break;
 
             if (disclosureRepository.existsByDartId(filing.accessionNumber())) continue;
 

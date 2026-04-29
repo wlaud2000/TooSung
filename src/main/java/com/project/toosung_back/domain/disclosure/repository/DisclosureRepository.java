@@ -41,4 +41,8 @@ public interface DisclosureRepository extends JpaRepository<Disclosure, Long> {
             "GROUP BY d.stock.id")
     List<Object[]> countByStockIds(@Param("stockIds") List<Long> stockIds,
                                    @Param("from") java.time.LocalDateTime from);
+
+    boolean existsByStock_Id(Long stockId);
+
+    boolean existsByStock_IdAndSource(Long stockId, com.project.toosung_back.domain.disclosure.entity.DisclosureSource source);
 }

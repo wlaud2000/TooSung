@@ -45,6 +45,29 @@ public class DisclosureCollectorService {
         collectForDate(LocalDate.now());
     }
 
+    public void collectForDateAndStocks(LocalDate date, List<Stock> stocks) {
+        if (stocks.isEmpty()) return;
+
+        Map<String, Stock> symbolToStock = stocks.stream()
+                .collect(Collectors.toMap(Stock::getSymbol, s -> s));
+
+        String dateStr = date.format(DateTimeFormatter.BASIC_ISO_DATE);
+        log.info("[DisclosureCollectorService] 소급 수집: date={}, 대상={}개", dateStr, symbolToStock.size());
+
+        int savedCount = 0;
+        for (String pblntfTy : PBLNTF_TY_LIST) {
+            List<DartDisclosureListResponse.DartItem> items = dartApiClient.fetchDisclosureList(pblntfTy, dateStr);
+            for (DartDisclosureListResponse.DartItem item : items) {
+                if (processItem(item, symbolToStock, dateStr)) {
+                    savedCount++;
+                }
+            }
+        }
+
+        log.info("[DisclosureCollectorService] 소급 수집 완료: date={}, {}건 저장", dateStr, savedCount);
+        stocks.forEach(stock -> cacheEvictService.evictDisclosureCache(stock.getId()));
+    }
+
     public void collectForDate(LocalDate date) {
         List<Stock> stocks = watchlistRepository.findAllDistinctStocks();
         if (stocks.isEmpty()) {
