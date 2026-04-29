@@ -26,6 +26,7 @@ public class WatchlistCommandService {
     private final StockRepository stockRepository;
     private final MemberRepository memberRepository;
     private final CacheEvictService cacheEvictService;
+    private final WatchlistBackfillService watchlistBackfillService;
 
     @Transactional
     public WatchlistResDTO.WatchlistItem addWatchlist(Long memberId, WatchlistReqDTO.AddWatchlist reqDTO) {
@@ -44,6 +45,7 @@ public class WatchlistCommandService {
         Watchlist saved = watchlistRepository.save(WatchlistConverter.toWatchlist(member, stock, nextPosition));
         cacheEvictService.evictBriefingCache(memberId);
         cacheEvictService.evictSectorAnalysisCache(memberId);
+        watchlistBackfillService.triggerIfNeeded(stock.getId());
         return WatchlistConverter.toResWatchlistItem(saved);
     }
 
