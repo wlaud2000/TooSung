@@ -28,6 +28,7 @@ public interface NewsAnalysisRepository extends JpaRepository<NewsAnalysis, Long
             "JOIN NewsStock ns ON ns.news.id = n.id " +
             "WHERE ns.stock.id IN :stockIds " +
             "AND n.publishedAt >= :from " +
+            "AND na.isRelevant = true " +
             "ORDER BY n.publishedAt DESC")
     List<NewsAnalysis> findTodayByStockIds(@Param("stockIds") List<Long> stockIds,
                                            @Param("from") LocalDateTime from,
