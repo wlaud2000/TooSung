@@ -53,12 +53,16 @@ public class StockDataInitializer implements ApplicationRunner {
                 String dartCorpCode = (fields.length >= 5 && !fields[4].trim().isEmpty())
                         ? fields[4].trim() : null;
 
+                String sector = (fields.length >= 6 && !fields[5].trim().isEmpty())
+                        ? fields[5].trim() : null;
+
                 stocks.add(Stock.builder()
                         .symbol(fields[0].trim())
                         .name(fields[1].trim())
                         .market(fields[2].trim())
                         .country(fields[3].trim())
                         .dartCorpCode(dartCorpCode)
+                        .sector(sector)
                         .build());
             }
         }

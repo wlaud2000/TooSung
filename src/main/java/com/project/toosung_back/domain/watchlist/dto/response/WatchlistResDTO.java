@@ -19,4 +19,22 @@ public class WatchlistResDTO {
     public record ResWatchlistList(
             List<WatchlistItem> watchlist
     ) {}
+
+    @Builder
+    public record WatchlistStatusItem(
+            Long watchlistId,
+            Long stockId,
+            String name,
+            String code,
+            String market,
+            int positiveCount,
+            int negativeCount,
+            int neutralCount,
+            int disclosureCount
+    ) {}
+
+    @Builder
+    public record WatchlistStatusList(
+            List<WatchlistStatusItem> watchlist
+    ) {}
 }
