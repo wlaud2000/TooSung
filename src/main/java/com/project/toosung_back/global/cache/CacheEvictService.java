@@ -22,6 +22,14 @@ public class CacheEvictService {
         deleteByPattern("disclosure:list:" + stockId + ":*");
     }
 
+    public void evictBriefingCache(Long memberId) {
+        deleteByPattern("briefing:" + memberId);
+    }
+
+    public void evictSectorAnalysisCache(Long memberId) {
+        deleteByPattern("sector-analysis:" + memberId);
+    }
+
     public void evictAllBriefingCaches() {
         deleteByPattern("briefing:*");
     }

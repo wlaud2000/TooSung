@@ -13,6 +13,7 @@ import com.project.toosung_back.domain.watchlist.entity.Watchlist;
 import com.project.toosung_back.domain.watchlist.exception.WatchlistErrorCode;
 import com.project.toosung_back.domain.watchlist.exception.WatchlistException;
 import com.project.toosung_back.domain.watchlist.repository.WatchlistRepository;
+import com.project.toosung_back.global.cache.CacheEvictService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ public class WatchlistCommandService {
     private final WatchlistRepository watchlistRepository;
     private final StockRepository stockRepository;
     private final MemberRepository memberRepository;
+    private final CacheEvictService cacheEvictService;
 
     @Transactional
     public WatchlistResDTO.WatchlistItem addWatchlist(Long memberId, WatchlistReqDTO.AddWatchlist reqDTO) {
@@ -40,6 +42,8 @@ public class WatchlistCommandService {
         int nextPosition = (int) watchlistRepository.countByMember_IdAndDeletedAtIsNull(memberId) + 1;
 
         Watchlist saved = watchlistRepository.save(WatchlistConverter.toWatchlist(member, stock, nextPosition));
+        cacheEvictService.evictBriefingCache(memberId);
+        cacheEvictService.evictSectorAnalysisCache(memberId);
         return WatchlistConverter.toResWatchlistItem(saved);
     }
 
@@ -53,5 +57,7 @@ public class WatchlistCommandService {
         }
 
         watchlist.delete();
+        cacheEvictService.evictBriefingCache(memberId);
+        cacheEvictService.evictSectorAnalysisCache(memberId);
     }
 }
