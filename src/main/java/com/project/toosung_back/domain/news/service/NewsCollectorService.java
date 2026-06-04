@@ -18,11 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -34,6 +33,7 @@ public class NewsCollectorService {
     private final NewsRepository newsRepository;
     private final NewsStockRepository newsStockRepository;
     private final CacheEvictService cacheEvictService;
+    private final Executor newsCollectorExecutor;
 
     private static final DateTimeFormatter NAVER_DATE_FORMAT =
             DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
@@ -42,98 +42,100 @@ public class NewsCollectorService {
         List<Stock> stocks = watchlistRepository.findAllDistinctStocks();
         log.info("[NewsScheduler] 뉴스 수집 시작 - 대상 종목 수: {}", stocks.size());
 
-        for (Stock stock : stocks) {
-            try {
-                collectForStock(stock);
-                cacheEvictService.evictNewsCache(stock.getId());
-            } catch (Exception e) {
-                log.error("[NewsScheduler] 종목 처리 중 오류 - 종목: {} ({}), error: {}",
-                        stock.getName(), stock.getSymbol(), e.getMessage());
-            }
-        }
+        List<CompletableFuture<Void>> futures = stocks.stream()
+                .map(stock -> CompletableFuture.runAsync(() -> {
+                    try {
+                        collectForStock(stock);
+                        cacheEvictService.evictNewsCache(stock.getId());
+                    } catch (Exception e) {
+                        log.error("[NewsScheduler] 종목 처리 중 오류 - 종목: {} ({}), error: {}",
+                                stock.getName(), stock.getSymbol(), e.getMessage());
+                    }
+                }, newsCollectorExecutor))
+                .toList();
 
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         log.info("[NewsScheduler] 뉴스 수집 완료");
     }
 
     @Transactional
     public void collectForStock(Stock stock) {
-        String query = stock.getName();
-        List<NaverNewsResponse.NaverNewsItem> items = naverNewsClient.fetchNews(query);
+        List<NaverNewsResponse.NaverNewsItem> items = naverNewsClient.fetchNews(stock.getName());
 
+        List<String> urlCandidates = items.stream()
+                .map(item -> (item.originalLink() != null && !item.originalLink().isBlank())
+                        ? item.originalLink() : item.link())
+                .filter(url -> url != null && !url.isBlank())
+                .distinct()
+                .toList();
+
+        Set<String> existingUrls = new HashSet<>(newsRepository.findExistingUrls(urlCandidates));
+
+        List<Set<String>> tokenizedTitles = newsRepository
+                .findTitlesByStockIdSince(stock.getId(), LocalDateTime.now().minusHours(24))
+                .stream()
+                .map(this::tokenize)
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        List<News> newsToSave = new ArrayList<>();
         int savedCount = 0;
         int skippedCount = 0;
 
-        List<String> recentTitles = newsRepository.findTitlesByStockIdSince(
-                stock.getId(), LocalDateTime.now().minusHours(24));
-
         for (NaverNewsResponse.NaverNewsItem item : items) {
             String url = (item.originalLink() != null && !item.originalLink().isBlank())
-                    ? item.originalLink()
-                    : item.link();
+                    ? item.originalLink() : item.link();
 
-            if (url == null || url.isBlank()) {
-                skippedCount++;
-                continue;
-            }
-
-            if (newsRepository.existsByUrl(url)) {
+            if (url == null || url.isBlank() || existingUrls.contains(url)) {
                 skippedCount++;
                 continue;
             }
 
             String title = cleanHtml(item.title());
+            Set<String> titleTokens = tokenize(title);
 
-            if (isSimilarToAny(title, recentTitles)) {  // Jaccard 0.4 이상 유사 시 중복 처리
+            if (isSimilarToAny(titleTokens, tokenizedTitles)) {
                 skippedCount++;
                 continue;
             }
 
-            News news = News.builder()
+            newsToSave.add(News.builder()
                     .externalId(url)
                     .source("naver")
                     .title(title)
                     .url(url)
                     .publishedAt(parseDate(item.pubDate()))
-                    .build();
-
-            newsRepository.save(news);
-
-            NewsStock newsStock = NewsStock.builder()
-                    .news(news)
-                    .stock(stock)
-                    .build();
-
-            newsStockRepository.save(newsStock);
-            recentTitles.add(title);
+                    .build());
+            tokenizedTitles.add(titleTokens);
             savedCount++;
+        }
+
+        if (!newsToSave.isEmpty()) {
+            List<News> savedNews = newsRepository.saveAll(newsToSave);
+            List<NewsStock> newsStocksToSave = savedNews.stream()
+                    .map(news -> NewsStock.builder().news(news).stock(stock).build())
+                    .toList();
+            newsStockRepository.saveAll(newsStocksToSave);
         }
 
         log.info("[NewsScheduler] 종목: {} ({}) - 저장: {}건, 중복 스킵: {}건",
                 stock.getName(), stock.getSymbol(), savedCount, skippedCount);
     }
 
-    private boolean isSimilarToAny(String title, List<String> candidates) {
-        return candidates.stream().anyMatch(c -> jaccardSimilarity(title, c) >= 0.4);
+    private boolean isSimilarToAny(Set<String> titleTokens, List<Set<String>> candidateTokens) {
+        return candidateTokens.stream().anyMatch(c -> jaccardSimilarity(titleTokens, c) >= 0.4);
     }
 
-    private double jaccardSimilarity(String a, String b) {
-        Set<String> wordsA = tokenize(a);
-        Set<String> wordsB = tokenize(b);
-
-        Set<String> intersection = new HashSet<>(wordsA);
-        intersection.retainAll(wordsB);
-
-        Set<String> union = new HashSet<>(wordsA);
-        union.addAll(wordsB);
-
-        if (union.isEmpty()) return 0.0;
-        return (double) intersection.size() / union.size();
+    private double jaccardSimilarity(Set<String> a, Set<String> b) {
+        if (a.isEmpty() && b.isEmpty()) return 0.0;
+        long intersectionSize = a.stream().filter(b::contains).count();
+        long unionSize = (long) a.size() + b.size() - intersectionSize;
+        return unionSize == 0 ? 0.0 : (double) intersectionSize / unionSize;
     }
 
     private Set<String> tokenize(String title) {
         return Arrays.stream(title.split("[\\s\\p{Punct}]+"))
                 .filter(w -> w.length() >= 2)
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
     }
 
     private String cleanHtml(String html) {

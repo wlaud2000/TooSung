@@ -15,6 +15,9 @@ public interface NewsRepository extends JpaRepository<News, Long> {
 
     boolean existsByUrl(String url);
 
+    @Query("SELECT n.url FROM News n WHERE n.url IN :urls")
+    List<String> findExistingUrls(@Param("urls") List<String> urls);
+
     @Query("SELECT n FROM News n " +
             "JOIN NewsStock ns ON ns.news = n " +
             "JOIN NewsAnalysis na ON na.news = n " +
