@@ -27,7 +27,7 @@ public class WatchlistQueryService {
 
     @Transactional(readOnly = true)
     public WatchlistResDTO.ResWatchlistList getWatchlist(Long memberId) {
-        List<WatchlistResDTO.WatchlistItem> items = watchlistRepository.findByMember_IdOrderByPositionAsc(memberId)
+        List<WatchlistResDTO.WatchlistItem> items = watchlistRepository.findByMember_IdAndDeletedAtIsNullOrderByPositionAsc(memberId)
                 .stream()
                 .map(WatchlistConverter::toResWatchlistItem)
                 .toList();
@@ -39,10 +39,7 @@ public class WatchlistQueryService {
 
     @Transactional(readOnly = true)
     public WatchlistResDTO.WatchlistStatusList getWatchlistStatus(Long memberId) {
-        List<Watchlist> watchlists = watchlistRepository.findByMember_IdOrderByPositionAsc(memberId)
-                .stream()
-                .filter(w -> !w.isDeleted())
-                .toList();
+        List<Watchlist> watchlists = watchlistRepository.findByMember_IdAndDeletedAtIsNullOrderByPositionAsc(memberId);
 
         if (watchlists.isEmpty()) {
             return WatchlistResDTO.WatchlistStatusList.builder().watchlist(List.of()).build();

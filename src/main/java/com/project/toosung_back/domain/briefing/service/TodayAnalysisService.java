@@ -35,7 +35,7 @@ public class TodayAnalysisService {
     private final DisclosureAnalysisRepository disclosureAnalysisRepository;
 
     public TodayAnalysisResult aggregate(Long memberId) {
-        List<Watchlist> watchlists = watchlistRepository.findByMember_IdOrderByPositionAsc(memberId)
+        List<Watchlist> watchlists = watchlistRepository.findByMember_IdAndDeletedAtIsNullOrderByPositionAsc(memberId)
                 .stream()
                 .filter(w -> !w.isDeleted())
                 .toList();

@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface WatchlistRepository extends JpaRepository<Watchlist, Long> {
 
-    List<Watchlist> findByMember_IdOrderByPositionAsc(Long memberId);
+    List<Watchlist> findByMember_IdAndDeletedAtIsNullOrderByPositionAsc(Long memberId);
 
     boolean existsByMember_IdAndStock_IdAndDeletedAtIsNull(Long memberId, Long stockId);
 
