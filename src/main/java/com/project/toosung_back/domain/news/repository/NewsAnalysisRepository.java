@@ -23,16 +23,16 @@ public interface NewsAnalysisRepository extends JpaRepository<NewsAnalysis, Long
     @Query("SELECT na FROM NewsAnalysis na JOIN FETCH na.news WHERE na.news.id IN :newsIds")
     List<NewsAnalysis> findWithNewsByNewsIdIn(@Param("newsIds") Collection<Long> newsIds);
 
-    @Query("SELECT na FROM NewsAnalysis na " +
+    @Query("SELECT na, ns.stock.id FROM NewsAnalysis na " +
             "JOIN FETCH na.news n " +
             "JOIN NewsStock ns ON ns.news.id = n.id " +
             "WHERE ns.stock.id IN :stockIds " +
             "AND n.publishedAt >= :from " +
             "AND na.isRelevant = true " +
             "ORDER BY n.publishedAt DESC")
-    List<NewsAnalysis> findTodayByStockIds(@Param("stockIds") List<Long> stockIds,
-                                           @Param("from") LocalDateTime from,
-                                           Pageable pageable);
+    List<Object[]> findTodayByStockIdsWithStockId(@Param("stockIds") List<Long> stockIds,
+                                                   @Param("from") LocalDateTime from,
+                                                   Pageable pageable);
 
     @Query("SELECT ns.stock.id, na.sentiment, COUNT(na) " +
             "FROM NewsAnalysis na " +

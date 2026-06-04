@@ -5,7 +5,6 @@ import com.project.toosung_back.domain.disclosure.repository.DisclosureAnalysisR
 import com.project.toosung_back.domain.news.entity.NewsAnalysis;
 import com.project.toosung_back.domain.news.enums.Sentiment;
 import com.project.toosung_back.domain.news.repository.NewsAnalysisRepository;
-import com.project.toosung_back.domain.news.repository.NewsStockRepository;
 import com.project.toosung_back.domain.watchlist.entity.Watchlist;
 import com.project.toosung_back.domain.watchlist.repository.WatchlistRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,14 +30,10 @@ public class TodayAnalysisService {
 
     private final WatchlistRepository watchlistRepository;
     private final NewsAnalysisRepository newsAnalysisRepository;
-    private final NewsStockRepository newsStockRepository;
     private final DisclosureAnalysisRepository disclosureAnalysisRepository;
 
     public TodayAnalysisResult aggregate(Long memberId) {
-        List<Watchlist> watchlists = watchlistRepository.findByMember_IdAndDeletedAtIsNullOrderByPositionAsc(memberId)
-                .stream()
-                .filter(w -> !w.isDeleted())
-                .toList();
+        List<Watchlist> watchlists = watchlistRepository.findByMember_IdAndDeletedAtIsNullOrderByPositionAsc(memberId);
 
         if (watchlists.isEmpty()) {
             return new TodayAnalysisResult(List.of(), List.of());
@@ -51,11 +46,18 @@ public class TodayAnalysisService {
 
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
 
-        List<NewsAnalysis> rawNews = newsAnalysisRepository.findTodayByStockIds(
+        List<Object[]> rows = newsAnalysisRepository.findTodayByStockIdsWithStockId(
                 stockIds, todayStart, PageRequest.of(0, NEWS_FETCH_LIMIT));
 
-        List<Long> newsIds = rawNews.stream().map(na -> na.getNews().getId()).toList();
-        Map<Long, Long> newsIdToStockId = buildNewsIdToStockId(newsIds);
+        List<NewsAnalysis> rawNews = rows.stream()
+                .map(row -> (NewsAnalysis) row[0])
+                .toList();
+
+        Map<Long, Long> newsIdToStockId = rows.stream()
+                .collect(Collectors.toMap(
+                        row -> ((NewsAnalysis) row[0]).getNews().getId(),
+                        row -> (Long) row[1],
+                        (a, b) -> a));
 
         List<NewsAnalysis> filteredNews = deduplicateAndFilter(rawNews, newsIdToStockId, stockIdSet);
 
@@ -66,18 +68,6 @@ public class TodayAnalysisService {
                 memberId, filteredNews.size(), disclosures.size());
 
         return new TodayAnalysisResult(filteredNews, disclosures);
-
-    }
-
-    private Map<Long, Long> buildNewsIdToStockId(List<Long> newsIds) {
-        if (newsIds.isEmpty()) return Map.of();
-
-        return newsStockRepository.findAllByNewsIdIn(newsIds).stream()
-                .collect(Collectors.toMap(
-                        ns -> ns.getNews().getId(),
-                        ns -> ns.getStock().getId(),
-                        (a, b) -> a // 같은 newsId가 여러번 나오면 처음 만난 stockId만 남기고 나머지는 버림
-                ));
     }
 
     private List<NewsAnalysis> deduplicateAndFilter(

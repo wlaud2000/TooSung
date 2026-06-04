@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.toosung_back.domain.news.entity.NewsAnalysis;
 import com.project.toosung_back.domain.news.enums.Sentiment;
 import com.project.toosung_back.domain.news.repository.NewsAnalysisRepository;
-import com.project.toosung_back.domain.news.repository.NewsStockRepository;
 import com.project.toosung_back.domain.watchlist.ai.SectorAnalysisPrompt;
 import com.project.toosung_back.domain.watchlist.dto.response.WatchlistSectorResDTO;
 import com.project.toosung_back.domain.watchlist.entity.Watchlist;
@@ -37,7 +36,6 @@ public class SectorAnalysisService {
 
     private final WatchlistRepository watchlistRepository;
     private final NewsAnalysisRepository newsAnalysisRepository;
-    private final NewsStockRepository newsStockRepository;
     private final OpenAiClient openAiClient;
     private final ObjectMapper objectMapper;
     private final RedisUtil redisUtil;
@@ -60,8 +58,7 @@ public class SectorAnalysisService {
     }
 
     private WatchlistSectorResDTO.SectorAnalysisList buildSectorAnalysis(Long memberId) {
-        List<Watchlist> watchlists = watchlistRepository.findByMember_IdAndDeletedAtIsNullOrderByPositionAsc(memberId)
-                .stream().filter(w -> !w.isDeleted()).toList();
+        List<Watchlist> watchlists = watchlistRepository.findByMember_IdAndDeletedAtIsNullOrderByPositionAsc(memberId);
 
         if (watchlists.isEmpty()) {
             return WatchlistSectorResDTO.SectorAnalysisList.builder().sectors(List.of()).build();
@@ -82,18 +79,23 @@ public class SectorAnalysisService {
         // 종목별 감성 카운트
         Map<Long, Map<Sentiment, Integer>> sentimentMap = buildSentimentMap(allStockIds, from);
 
-        // 최근 12시간 뉴스 전체 조회 후 종목→섹터 매핑
-        List<NewsAnalysis> allNews = newsAnalysisRepository.findTodayByStockIds(
+        // 최근 12시간 뉴스 전체 조회 — stockId 스칼라를 함께 반환하므로 별도 쿼리 불필요
+        List<Object[]> rows = newsAnalysisRepository.findTodayByStockIdsWithStockId(
                 allStockIds, from, PageRequest.of(0, 50));
+
+        List<NewsAnalysis> allNews = rows.stream().map(row -> (NewsAnalysis) row[0]).toList();
+
+        Map<Long, Long> newsIdToStockId = rows.stream()
+                .collect(Collectors.toMap(
+                        row -> ((NewsAnalysis) row[0]).getNews().getId(),
+                        row -> (Long) row[1],
+                        (a, b) -> a));
 
         Map<Long, String> stockIdToSector = watchlists.stream()
                 .filter(w -> w.getStock().getSector() != null)
                 .collect(Collectors.toMap(w -> w.getStock().getId(), w -> w.getStock().getSector(), (a, b) -> a));
 
         // 뉴스를 섹터별로 분류
-        Map<Long, Long> newsIdToStockId = buildNewsIdToStockId(
-                allNews.stream().map(na -> na.getNews().getId()).toList());
-
         Map<String, List<NewsAnalysis>> sectorNewsMap = new LinkedHashMap<>();
         Set<Long> seenNewsIds = new HashSet<>();
         for (NewsAnalysis na : allNews) {
@@ -160,12 +162,6 @@ public class SectorAnalysisService {
             result.computeIfAbsent(stockId, k -> new HashMap<>()).put(sentiment, count);
         }
         return result;
-    }
-
-    private Map<Long, Long> buildNewsIdToStockId(List<Long> newsIds) {
-        if (newsIds.isEmpty()) return Map.of();
-        return newsStockRepository.findAllByNewsIdIn(newsIds).stream()
-                .collect(Collectors.toMap(ns -> ns.getNews().getId(), ns -> ns.getStock().getId(), (a, b) -> a));
     }
 
     private Map<String, String> generateAiAnalyses(Map<String, List<NewsAnalysis>> sectorNewsMap) {
