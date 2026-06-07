@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -28,6 +29,10 @@ import java.util.concurrent.TimeUnit;
 public class BriefingQueryService {
 
     private static final String CACHE_KEY_PREFIX = "briefing:";
+    private static final String LOCK_KEY_PREFIX  = "briefing:lock:";
+    private static final int    LOCK_TTL_SECONDS = 30;
+    private static final int    MAX_WAIT_ATTEMPTS = 15;
+    private static final long   WAIT_INTERVAL_MS  = 200;
 
     private final BriefingGeneratorService briefingGeneratorService;
     private final NewsAnalysisRepository newsAnalysisRepository;
@@ -38,25 +43,58 @@ public class BriefingQueryService {
     public BriefingResDTO.BriefingDetail getTodayBriefing(Long memberId) {
         String cacheKey = CACHE_KEY_PREFIX + memberId;
 
-        if (redisUtil.hasKey(cacheKey)) {
-            String cached = redisUtil.get(cacheKey);
+        // 캐시 히트 fast-path
+        BriefingResDTO.BriefingDetail cached = readCache(cacheKey);
+        if (cached != null) return cached;
+
+        String lockKey = LOCK_KEY_PREFIX + memberId;
+        if (redisUtil.setIfAbsent(lockKey, "1", LOCK_TTL_SECONDS, TimeUnit.SECONDS)) {
             try {
-                return objectMapper.readValue(cached, BriefingResDTO.BriefingDetail.class);
-            } catch (JsonProcessingException e) {
-                log.warn("[BriefingQueryService] 캐시 역직렬화 실패, 재생성 - memberId={}", memberId);
-                redisUtil.delete(cacheKey);
+                // 락 획득 후 double-check
+                BriefingResDTO.BriefingDetail rechecked = readCache(cacheKey);
+                if (rechecked != null) return rechecked;
+
+                BriefingResult result = briefingGeneratorService.generate(memberId);
+                BriefingResDTO.BriefingDetail dto = toDetail(result);
+                cacheUntilMidnight(cacheKey, dto);
+                return dto;
+            } catch (Exception e) {
+                log.error("[BriefingQueryService] 브리핑 생성 실패 - memberId={}, error={}", memberId, e.getMessage());
+                return emptyDetail();
+            } finally {
+                redisUtil.delete(lockKey);
             }
         }
 
+        // 락 획득 실패 — 다른 스레드의 캐시 결과를 대기
+        return awaitCache(cacheKey, memberId);
+    }
+
+    private BriefingResDTO.BriefingDetail readCache(String cacheKey) {
+        String raw = redisUtil.get(cacheKey);
+        if (raw == null) return null;
         try {
-            BriefingResult result = briefingGeneratorService.generate(memberId);
-            BriefingResDTO.BriefingDetail dto = toDetail(result);
-            cacheUntilMidnight(cacheKey, dto);
-            return dto;
-        } catch (Exception e) {
-            log.error("[BriefingQueryService] 브리핑 생성 실패 - memberId={}, error={}", memberId, e.getMessage());
-            return emptyDetail();
+            return objectMapper.readValue(raw, BriefingResDTO.BriefingDetail.class);
+        } catch (JsonProcessingException e) {
+            log.warn("[BriefingQueryService] 캐시 역직렬화 실패, 삭제 후 재생성");
+            redisUtil.delete(cacheKey);
+            return null;
         }
+    }
+
+    private BriefingResDTO.BriefingDetail awaitCache(String cacheKey, Long memberId) {
+        for (int attempt = 0; attempt < MAX_WAIT_ATTEMPTS; attempt++) {
+            try {
+                Thread.sleep(WAIT_INTERVAL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+            BriefingResDTO.BriefingDetail result = readCache(cacheKey);
+            if (result != null) return result;
+        }
+        log.warn("[BriefingQueryService] 캐시 대기 타임아웃 - memberId={}", memberId);
+        return emptyDetail();
     }
 
     public BriefingSourceResDTO.SourceList getSources(Long memberId) {
@@ -101,11 +139,10 @@ public class BriefingQueryService {
     private void cacheUntilMidnight(String cacheKey, BriefingResDTO.BriefingDetail dto) {
         try {
             String json = objectMapper.writeValueAsString(dto);
-            long ttlSeconds = Math.max(
-                    ChronoUnit.SECONDS.between(LocalDateTime.now(), LocalDate.now().plusDays(1).atStartOfDay()),
-                    1L
-            );
-            redisUtil.save(cacheKey, json, ttlSeconds, TimeUnit.SECONDS);
+            long baseTtl = ChronoUnit.SECONDS.between(LocalDateTime.now(), LocalDate.now().plusDays(1).atStartOfDay());
+            long jitter   = ThreadLocalRandom.current().nextLong(-300, 300); // ±5분 랜덤 분산
+            long ttl      = Math.max(baseTtl + jitter, 1L);
+            redisUtil.save(cacheKey, json, ttl, TimeUnit.SECONDS);
         } catch (JsonProcessingException e) {
             log.warn("[BriefingQueryService] 캐시 저장 실패, 브리핑은 정상 반환 - error={}", e.getMessage());
         }

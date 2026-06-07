@@ -27,4 +27,8 @@ public class RedisUtil {
 
     public void delete(String key) { redisTemplate.delete(key); }
 
+    public boolean setIfAbsent(String key, String value, long ttl, TimeUnit timeUnit) {
+        return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(key, value, ttl, timeUnit));
+    }
+
 }

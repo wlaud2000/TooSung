@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -192,8 +193,9 @@ public class SectorAnalysisService {
     private void cacheUntilMidnight(String cacheKey, WatchlistSectorResDTO.SectorAnalysisList dto) {
         try {
             String json = objectMapper.writeValueAsString(dto);
-            long ttl = Math.max(ChronoUnit.SECONDS.between(LocalDateTime.now(),
-                    LocalDate.now().plusDays(1).atStartOfDay()), 1L);
+            long baseTtl = ChronoUnit.SECONDS.between(LocalDateTime.now(), LocalDate.now().plusDays(1).atStartOfDay());
+            long jitter   = ThreadLocalRandom.current().nextLong(-300, 300); // ±5분 랜덤 분산
+            long ttl      = Math.max(baseTtl + jitter, 1L);
             redisUtil.save(cacheKey, json, ttl, TimeUnit.SECONDS);
         } catch (JsonProcessingException e) {
             log.warn("[SectorAnalysisService] 캐시 저장 실패: {}", e.getMessage());
