@@ -4,6 +4,53 @@ spring:
       on-profile: test
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:test
-    username: admin
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1
+    username: sa
     password:
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        generate_statistics: true
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+  jwt:
+    secret: test-secret-key-minimum-256-bits-long-for-hmac-sha-algorithm-padding
+    token:
+      access-expiration-time: 1800000
+      refresh-expiration-time: 604800000
+  data:
+    redis:
+      host: localhost
+      port: 6380
+  oauth:
+    kakao:
+      client-id: test-kakao-id
+      client-secret: test-kakao-secret
+      redirect-uri: http://localhost:8080/test
+    google:
+      client-id: test-google-id
+      client-secret: test-google-secret
+      redirect-uri: http://localhost:8080/test
+
+cookie:
+  secure: false
+  same-site: Lax
+
+naver:
+  news:
+    client-id: test
+    client-secret: test
+    uri: https://openapi.naver.com/v1/search/news.json
+    display: 100
+
+dart:
+  api-key: test
+
+openai:
+  api-key: test
+  model: gpt-4o-mini
