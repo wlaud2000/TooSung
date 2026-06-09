@@ -2,10 +2,13 @@ package com.project.toosung_back.global.cache;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -39,8 +42,15 @@ public class CacheEvictService {
     }
 
     private void deleteByPattern(String pattern) {
-        Set<String> keys = redisTemplate.keys(pattern);
-        if (keys != null && !keys.isEmpty()) {
+        ScanOptions options = ScanOptions.scanOptions().match(pattern).count(100).build();
+        List<String> keys = new ArrayList<>();
+        try (Cursor<String> cursor = redisTemplate.scan(options)) {
+            cursor.forEachRemaining(keys::add);
+        } catch (Exception e) {
+            log.warn("[CacheEvict] SCAN 실패: pattern={}", pattern, e);
+            return;
+        }
+        if (!keys.isEmpty()) {
             redisTemplate.delete(keys);
             log.debug("[CacheEvict] 캐시 삭제 완료: pattern={}, count={}", pattern, keys.size());
         }
