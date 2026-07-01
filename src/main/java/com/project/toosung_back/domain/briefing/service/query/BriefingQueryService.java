@@ -13,6 +13,11 @@ import com.project.toosung_back.domain.news.repository.NewsAnalysisRepository;
 import com.project.toosung_back.global.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.connection.MessageListener;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -20,8 +25,11 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Service
@@ -30,15 +38,18 @@ public class BriefingQueryService {
 
     private static final String CACHE_KEY_PREFIX = "briefing:";
     private static final String LOCK_KEY_PREFIX  = "briefing:lock:";
-    private static final int    LOCK_TTL_SECONDS = 30;
-    private static final int    MAX_WAIT_ATTEMPTS = 15;
-    private static final long   WAIT_INTERVAL_MS  = 200;
+    private static final String CHANNEL_PREFIX   = "briefing:ready:";
+
+    @Value("${cache.lock.ttl:30}")
+    private int lockTtlSeconds;
 
     private final BriefingGeneratorService briefingGeneratorService;
     private final NewsAnalysisRepository newsAnalysisRepository;
     private final DisclosureAnalysisRepository disclosureAnalysisRepository;
     private final RedisUtil redisUtil;
     private final ObjectMapper objectMapper;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final RedisMessageListenerContainer listenerContainer;
 
     public BriefingResDTO.BriefingDetail getTodayBriefing(Long memberId) {
         String cacheKey = CACHE_KEY_PREFIX + memberId;
@@ -48,7 +59,7 @@ public class BriefingQueryService {
         if (cached != null) return cached;
 
         String lockKey = LOCK_KEY_PREFIX + memberId;
-        if (redisUtil.setIfAbsent(lockKey, "1", LOCK_TTL_SECONDS, TimeUnit.SECONDS)) {
+        if (redisUtil.setIfAbsent(lockKey, "1", lockTtlSeconds, TimeUnit.SECONDS)) {
             try {
                 // 락 획득 후 double-check
                 BriefingResDTO.BriefingDetail rechecked = readCache(cacheKey);
@@ -63,10 +74,10 @@ public class BriefingQueryService {
                 return emptyDetail();
             } finally {
                 redisUtil.delete(lockKey);
+                stringRedisTemplate.convertAndSend(CHANNEL_PREFIX + memberId, "1");
             }
         }
 
-        // 락 획득 실패 — 다른 스레드의 캐시 결과를 대기
         return awaitCache(cacheKey, memberId);
     }
 
@@ -82,19 +93,35 @@ public class BriefingQueryService {
         }
     }
 
-    private BriefingResDTO.BriefingDetail awaitCache(String cacheKey, Long memberId) {
-        for (int attempt = 0; attempt < MAX_WAIT_ATTEMPTS; attempt++) {
-            try {
-                Thread.sleep(WAIT_INTERVAL_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
+    BriefingResDTO.BriefingDetail awaitCache(String cacheKey, Long memberId) {
+        String channel = CHANNEL_PREFIX + memberId;
+        ChannelTopic topic = new ChannelTopic(channel);
+        CompletableFuture<BriefingResDTO.BriefingDetail> future = new CompletableFuture<>();
+
+        MessageListener listener = (message, pattern) -> {
             BriefingResDTO.BriefingDetail result = readCache(cacheKey);
-            if (result != null) return result;
+            future.complete(result != null ? result : emptyDetail());
+        };
+
+        listenerContainer.addMessageListener(listener, topic);
+        try {
+            // publish가 subscribe 이전에 발행된 경우 방어
+            BriefingResDTO.BriefingDetail existing = readCache(cacheKey);
+            if (existing != null) return existing;
+
+            return future.get(lockTtlSeconds, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            log.warn("[BriefingQueryService] Pub/Sub 대기 타임아웃 - memberId={}", memberId);
+            return emptyDetail();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return emptyDetail();
+        } catch (ExecutionException e) {
+            log.warn("[BriefingQueryService] Pub/Sub 리스너 오류 - memberId={}", memberId);
+            return emptyDetail();
+        } finally {
+            listenerContainer.removeMessageListener(listener, topic);
         }
-        log.warn("[BriefingQueryService] 캐시 대기 타임아웃 - memberId={}", memberId);
-        return emptyDetail();
     }
 
     public BriefingSourceResDTO.SourceList getSources(Long memberId) {
