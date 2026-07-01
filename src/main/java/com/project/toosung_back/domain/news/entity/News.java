@@ -1,5 +1,6 @@
 package com.project.toosung_back.domain.news.entity;
 
+import com.project.toosung_back.domain.news.enums.NewsCategory;
 import com.project.toosung_back.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -35,4 +36,11 @@ public class News extends BaseEntity {
 
     @Column(name = "published_at", nullable = false)
     private LocalDateTime publishedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "news_category", nullable = true, length = 20)
+    private NewsCategory newsCategory;
+
+    @Column(name = "region", nullable = true, length = 50)
+    private String region;
 }
