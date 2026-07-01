@@ -25,7 +25,7 @@ public class RealEstateNewsResDTO {
             String region,
             String sentiment,
             List<RealEstateNewsItem> items,
-            Long nextCursor,
+            LocalDateTime nextCursor,
             boolean hasNext
     ) {}
 }
