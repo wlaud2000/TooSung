@@ -3,15 +3,17 @@ package com.project.toosung_back.domain.news.controller;
 import com.project.toosung_back.domain.news.controller.docs.RealEstateNewsDocs;
 import com.project.toosung_back.domain.news.dto.response.RealEstateNewsResDTO;
 import com.project.toosung_back.domain.news.enums.Sentiment;
+import com.project.toosung_back.domain.news.service.RealEstateNewsAnalysisService;
+import com.project.toosung_back.domain.news.service.RealEstateNewsCollectorService;
 import com.project.toosung_back.domain.news.service.query.RealEstateNewsQueryService;
 import com.project.toosung_back.global.apiPayload.CustomResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,13 +21,15 @@ import org.springframework.web.server.ResponseStatusException;
 public class RealEstateNewsController implements RealEstateNewsDocs {
 
     private final RealEstateNewsQueryService realEstateNewsQueryService;
+    private final RealEstateNewsCollectorService realEstateNewsCollectorService;
+    private final RealEstateNewsAnalysisService realEstateNewsAnalysisService;
 
     @Override
     @GetMapping("/realestate")
     public CustomResponse<RealEstateNewsResDTO.RealEstateNewsList> getRealEstateNews(
             @RequestParam String region,
             @RequestParam(required = false) String sentiment,
-            @RequestParam(required = false) Long cursor,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime cursor,
             @RequestParam(defaultValue = "10") int size
     ) {
         Sentiment sentimentEnum = null;
@@ -42,5 +46,12 @@ public class RealEstateNewsController implements RealEstateNewsDocs {
                 realEstateNewsQueryService.getRealEstateNews(region, sentimentEnum, cursor, size);
 
         return CustomResponse.onSuccess("부동산 뉴스 조회 성공", result);
+    }
+
+    @PostMapping("/realestate/collect")
+    public CustomResponse<String> triggerCollect() {
+        realEstateNewsCollectorService.collectAll();
+        realEstateNewsAnalysisService.analyzeUnanalyzedRealEstateNews();
+        return CustomResponse.onSuccess("수집 및 분석 트리거 완료", null);
     }
 }
