@@ -2,13 +2,13 @@ package com.project.toosung_back.domain.news.service;
 
 import com.project.toosung_back.domain.news.client.NaverNewsClient;
 import com.project.toosung_back.domain.news.dto.response.NaverNewsResponse;
-import com.project.toosung_back.domain.news.entity.News;
-import com.project.toosung_back.domain.news.enums.NewsCategory;
-import com.project.toosung_back.domain.news.repository.NewsRepository;
+import com.project.toosung_back.domain.news.entity.RealEstateNews;
+import com.project.toosung_back.domain.news.repository.RealEstateNewsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -25,35 +25,13 @@ import java.util.stream.Collectors;
 public class RealEstateNewsCollectorService {
 
     private final NaverNewsClient naverNewsClient;
-    private final NewsRepository newsRepository;
+    private final RealEstateNewsRepository realEstateNewsRepository;
     private final Executor newsCollectorExecutor;
 
     private static final DateTimeFormatter NAVER_DATE_FORMAT =
             DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
 
     private static final List<String> TARGET_REGIONS = List.of(
-            // ── 서울 25개 구 ──
-            "강남구", "강동구", "강북구", "강서구", "관악구",
-            "광진구", "구로구", "금천구", "노원구", "도봉구",
-            "동대문구", "동작구", "마포구", "서대문구", "서초구",
-            "성동구", "성북구", "송파구", "양천구", "영등포구",
-            "용산구", "은평구", "종로구", "중구", "중랑구",
-
-            // ── 서울 핵심 동 ──
-            "압구정동", "대치동", "반포동", "잠실동",
-            "성수동", "한남동", "이촌동", "목동",
-            "은마아파트", "둔촌주공",
-
-            // ── 1기 신도시 ──
-            "분당신도시", "일산신도시", "평촌신도시", "산본신도시", "중동신도시",
-
-            // ── 2기 신도시 ──
-            "판교신도시", "광교신도시", "동탄신도시",
-            "김포한강신도시", "파주운정신도시",
-            "양주옥정신도시", "양주회천신도시",
-            "위례신도시", "미사강변도시", "다산신도시",
-            "검단신도시", "오산세교신도시",
-
             // ── 3기 신도시 ──
             "남양주왕숙신도시", "하남교산신도시", "고양창릉신도시",
             "인천계양신도시", "부천대장신도시", "광명시흥신도시",
@@ -95,6 +73,7 @@ public class RealEstateNewsCollectorService {
     @Transactional
     public void collectForRegion(String region) {
         List<NaverNewsResponse.NaverNewsItem> items = naverNewsClient.fetchNews(region + " 부동산");
+        LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(3);
 
         List<String> urlCandidates = items.stream()
                 .map(item -> (item.originalLink() != null && !item.originalLink().isBlank())
@@ -103,49 +82,78 @@ public class RealEstateNewsCollectorService {
                 .distinct()
                 .toList();
 
-        Set<String> existingUrls = new HashSet<>(newsRepository.findExistingUrls(urlCandidates));
+        Set<String> existingUrls = new HashSet<>(realEstateNewsRepository.findExistingUrls(urlCandidates));
 
         List<Set<String>> tokenizedTitles = new ArrayList<>();
 
-        List<News> newsToSave = new ArrayList<>();
-        int savedCount = 0;
-        int skippedCount = 0;
+        List<RealEstateNews> newsToSave = new ArrayList<>();
+        int skipDuplicate = 0, skipOld = 0, skipRegion = 0, skipSimilar = 0;
 
         for (NaverNewsResponse.NaverNewsItem item : items) {
             String url = (item.originalLink() != null && !item.originalLink().isBlank())
                     ? item.originalLink() : item.link();
 
             if (url == null || url.isBlank() || existingUrls.contains(url)) {
-                skippedCount++;
+                skipDuplicate++;
+                continue;
+            }
+
+            LocalDateTime pubDate = parseDate(item.pubDate());
+            if (pubDate.isBefore(oneMonthAgo)) {
+                skipOld++;
                 continue;
             }
 
             String title = cleanHtml(item.title());
-            Set<String> titleTokens = tokenize(title);
 
-            if (isSimilarToAny(titleTokens, tokenizedTitles)) {
-                skippedCount++;
+            if (!isTitleRelevantToRegion(title, region)) {
+                skipRegion++;
                 continue;
             }
 
-            newsToSave.add(News.builder()
+            Set<String> titleTokens = tokenize(title);
+            if (isSimilarToAny(titleTokens, tokenizedTitles)) {
+                skipSimilar++;
+                continue;
+            }
+
+            newsToSave.add(RealEstateNews.builder()
                     .externalId(url)
                     .source("naver")
                     .title(title)
                     .url(url)
-                    .publishedAt(parseDate(item.pubDate()))
-                    .newsCategory(NewsCategory.REALESTATE)
+                    .publishedAt(pubDate)
                     .region(region)
                     .build());
             tokenizedTitles.add(titleTokens);
-            savedCount++;
         }
 
-        if (!newsToSave.isEmpty()) {
-            newsRepository.saveAll(newsToSave);
+        int actualSaved = 0, skipRace = 0;
+        for (RealEstateNews news : newsToSave) {
+            try {
+                realEstateNewsRepository.save(news);
+                actualSaved++;
+            } catch (DataIntegrityViolationException e) {
+                skipRace++;
+            }
         }
 
-        log.info("[RealEstate] 지역: {} - 저장: {}건, 중복 스킵: {}건", region, savedCount, skippedCount);
+        log.info("[RealEstate] 지역: {} - 저장: {}건 | 중복URL: {}건, 오래된날짜: {}건, 지역무관: {}건, 유사제목: {}건, 동시충돌: {}건",
+                region, actualSaved, skipDuplicate, skipOld, skipRegion, skipSimilar, skipRace);
+    }
+
+    private boolean isTitleRelevantToRegion(String title, String region) {
+        if (title.contains(region)) return true;
+        // "남양주왕숙신도시" → "남양주왕숙"
+        String stripped = region.replaceAll("(신도시|아파트)$", "").replaceAll("구$", "");
+        if (stripped.length() >= 2 && title.contains(stripped)) return true;
+        // 도시명(앞 2~3자) 제거 후 지구명만으로 매칭
+        // 예: "남양주왕숙" → "왕숙", "인천계양" → "계양", "군포대야미" → "대야미"
+        for (int prefixLen = 2; prefixLen <= Math.min(3, stripped.length() - 2); prefixLen++) {
+            String districtPart = stripped.substring(prefixLen);
+            if (districtPart.length() >= 2 && title.contains(districtPart)) return true;
+        }
+        return false;
     }
 
     private boolean isSimilarToAny(Set<String> titleTokens, List<Set<String>> candidateTokens) {
