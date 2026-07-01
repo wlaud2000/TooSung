@@ -41,7 +41,8 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             "/api/v1/auth/signup",
             "/api/v1/auth/reissue",
-            "/api/v1/oauth2/**"
+            "/api/v1/oauth2/**",
+            "/api/news/realestate"
     };
 
     @Bean
