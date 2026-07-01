@@ -47,36 +47,4 @@ public interface NewsRepository extends JpaRepository<News, Long> {
             "WHERE ns.stock.id = :stockId " +
             "AND n.publishedAt >= :since")
     List<String> findTitlesByStockIdSince(@Param("stockId") Long stockId, @Param("since") LocalDateTime since);
-
-    @Query("SELECT n FROM News n " +
-            "WHERE n.newsCategory = 'REALESTATE' " +
-            "AND NOT EXISTS (SELECT 1 FROM NewsAnalysis na WHERE na.news.id = n.id) " +
-            "ORDER BY n.id DESC")
-    List<News> findUnanalyzedRealEstateNews(Pageable pageable);
-
-    @Query("SELECT n FROM News n " +
-            "JOIN NewsAnalysis na ON na.news = n " +
-            "WHERE n.newsCategory = 'REALESTATE' " +
-            "AND n.region = :region " +
-            "AND na.isRelevant = true " +
-            "AND (:cursor IS NULL OR n.id < :cursor) " +
-            "ORDER BY n.id DESC")
-    Slice<News> findRealEstateNewsByRegionWithCursor(
-            @Param("region") String region,
-            @Param("cursor") Long cursor,
-            Pageable pageable);
-
-    @Query("SELECT n FROM News n " +
-            "JOIN NewsAnalysis na ON na.news = n " +
-            "WHERE n.newsCategory = 'REALESTATE' " +
-            "AND n.region = :region " +
-            "AND na.sentiment = :sentiment " +
-            "AND na.isRelevant = true " +
-            "AND (:cursor IS NULL OR n.id < :cursor) " +
-            "ORDER BY n.id DESC")
-    Slice<News> findRealEstateNewsByRegionAndSentimentWithCursor(
-            @Param("region") String region,
-            @Param("sentiment") Sentiment sentiment,
-            @Param("cursor") Long cursor,
-            Pageable pageable);
 }

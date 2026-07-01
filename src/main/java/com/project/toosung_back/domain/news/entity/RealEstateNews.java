@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Table(name = "news")
-public class News extends BaseEntity {
+@Table(name = "real_estate_news")
+public class RealEstateNews extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,8 +30,8 @@ public class News extends BaseEntity {
     @Column(name = "url", nullable = false, length = 500)
     private String url;
 
-    @Column(name = "thumbnail_url", length = 500)
-    private String thumbnailUrl;
+    @Column(name = "region", nullable = false, length = 50)
+    private String region;
 
     @Column(name = "published_at", nullable = false)
     private LocalDateTime publishedAt;
